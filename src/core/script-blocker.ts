@@ -21,6 +21,7 @@ export class ScriptBlocker {
   private manager: ConsentManager;
   private observer: MutationObserver | null = null;
   private activated = new WeakSet<Element>();
+  private consentHandler: (() => void) | null = null;
 
   constructor(manager: ConsentManager) {
     this.manager = manager;
@@ -56,15 +57,18 @@ export class ScriptBlocker {
     });
 
     // Re-scan when consent changes
-    this.manager.addEventListener('keksmeister:consent', () => {
-      this.scanAndActivate();
-    });
+    this.consentHandler = () => this.scanAndActivate();
+    this.manager.addEventListener('keksmeister:consent', this.consentHandler);
   }
 
-  /** Stop watching the DOM. */
+  /** Stop watching the DOM and listening for consent changes. */
   stop(): void {
     this.observer?.disconnect();
     this.observer = null;
+    if (this.consentHandler) {
+      this.manager.removeEventListener('keksmeister:consent', this.consentHandler);
+      this.consentHandler = null;
+    }
   }
 
   /** Scan all blocked scripts and activate those with accepted categories. */

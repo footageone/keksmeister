@@ -14,12 +14,12 @@
 - [x] README with full documentation
 - [x] ServiceAdapter interface + ServiceRegistry
 - [x] Built-in adapters: PostHog, Matomo, GA4, Meta Pixel, Hotjar, Mixpanel, HubSpot
-- [ ] Install dependencies and verify build
-- [ ] Unit tests for ConsentManager
-- [ ] Unit tests for CookieStore
-- [ ] Unit tests for ScriptBlocker
-- [ ] Unit tests for ServiceRegistry
-- [ ] Unit tests for PostHog adapter
+- [x] Install dependencies and verify build (6.63 kB gzipped)
+- [x] Unit tests for ConsentManager (21 tests)
+- [x] Unit tests for CookieStore (8 tests)
+- [x] Unit tests for ScriptBlocker (3 tests)
+- [x] Unit tests for ServiceRegistry (8 tests)
+- [x] Unit tests for PostHog adapter (6 tests)
 - [ ] Integration test: full consent flow with adapters
 
 ## CI/CD & Infrastructure

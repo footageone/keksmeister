@@ -5,6 +5,7 @@ A cookie consent Web Component library for footage.one.
 ## Project
 
 - **Language:** TypeScript (strict mode)
+- **Package Manager:** bun
 - **Build:** Vite 6 in library mode
 - **Test:** Vitest with happy-dom
 - **Output:** ESM (`keksmeister.js`) + UMD (`keksmeister.umd.cjs`)
@@ -54,8 +55,8 @@ Two consent mechanisms coexist:
 ## Commands
 
 ```sh
-npm run dev        # Dev server with demo page
-npm run build      # Production build
-npm run test       # Run tests
-npm run typecheck  # TypeScript check
+bun run dev        # Dev server with demo page
+bun run build      # Production build
+bun run test       # Run tests
+bun run typecheck  # TypeScript check
 ```
