@@ -26,11 +26,11 @@
 
 - [x] GitHub Actions: CI workflow (typecheck, test, build, bundle size check)
 - [x] GitHub Actions: npm publish workflow on release/tag (with provenance)
-- [ ] GitHub Actions: deploy demo page to GitHub Pages
+- [x] GitHub Actions: deploy demo page to GitHub Pages
 - [ ] Conventional Commits: add commitlint + husky for commit message validation
 - [x] Renovate for dependency updates
-- [ ] Bundle size tracking (e.g. size-limit or bundlesize)
-- [ ] Code coverage reporting
+- [x] Bundle size tracking (built into CI, 10 kB gzip limit)
+- [x] Code coverage reporting (Codecov via @vitest/coverage-v8)
 
 ## Phase 2: Polish & Compliance
 
