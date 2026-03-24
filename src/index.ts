@@ -22,8 +22,8 @@ export type {
   ServiceAdapter,
 } from './core/index.js';
 
-// i18n
-export { de, en, resolveTranslations } from './i18n/index.js';
+// i18n (only de + en bundled, others via keksmeister/i18n/*)
+export { de, en, resolveTranslations, registerTranslation } from './i18n/index.js';
 
 // Auto-register Web Components when this module is imported
 import { KeksmeisterBanner } from './ui/keksmeister-banner.js';

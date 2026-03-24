@@ -2,7 +2,29 @@ import type { KeksmeisterTranslations } from '../core/types.js';
 import { de } from './de.js';
 import { en } from './en.js';
 
-const translations: Record<string, KeksmeisterTranslations> = { de, en };
+// Only de and en are bundled in the main entry.
+// Additional languages can be imported directly:
+//   import { fr } from 'keksmeister/i18n/fr'
+const builtinTranslations: Record<string, KeksmeisterTranslations> = { de, en };
+
+// Additional translations loaded via registerTranslation()
+const customTranslations: Record<string, KeksmeisterTranslations> = {};
+
+/**
+ * Register additional translations at runtime.
+ *
+ * ```ts
+ * import { registerTranslation } from 'keksmeister';
+ * import { fr } from 'keksmeister/i18n/fr';
+ * registerTranslation('fr', fr);
+ * ```
+ */
+export function registerTranslation(
+  lang: string,
+  translations: KeksmeisterTranslations
+): void {
+  customTranslations[lang] = translations;
+}
 
 /**
  * Resolve translations from a language code or custom translations object.
@@ -13,7 +35,7 @@ export function resolveTranslations(
 ): KeksmeisterTranslations {
   if (!lang) return de;
   if (typeof lang === 'object') return lang;
-  return translations[lang] ?? de;
+  return customTranslations[lang] ?? builtinTranslations[lang] ?? de;
 }
 
 export { de, en };

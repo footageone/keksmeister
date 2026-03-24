@@ -110,6 +110,14 @@ export interface KeksmeisterConfig {
    * Default: undefined (no re-prompt, consent valid until cookie expires)
    */
   consentMaxAgeDays?: number;
+  /**
+   * Consent mode:
+   * - 'opt-in' (default): No cookies until user consents (GDPR/DSGVO).
+   * - 'opt-out': All non-essential cookies active by default, user can opt out (CCPA).
+   */
+  mode?: 'opt-in' | 'opt-out';
+  /** If true, show individual services under each category in the settings modal */
+  showServices?: boolean;
 }
 
 /**

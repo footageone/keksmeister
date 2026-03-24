@@ -282,6 +282,34 @@ export class KeksmeisterBanner extends HTMLElement {
         categoryEl.appendChild(descEl);
       }
 
+      // Show individual services if configured
+      if (this._config?.showServices && cat.services?.length) {
+        const servicesList = document.createElement('ul');
+        servicesList.className = 'km-services';
+        for (const service of cat.services) {
+          const li = document.createElement('li');
+          li.className = 'km-service';
+          const nameSpan = document.createElement('span');
+          nameSpan.className = 'km-service__name';
+          nameSpan.textContent = service.label;
+          li.appendChild(nameSpan);
+          if (service.description) {
+            const sDescSpan = document.createElement('span');
+            sDescSpan.className = 'km-service__description';
+            sDescSpan.textContent = ` — ${service.description}`;
+            li.appendChild(sDescSpan);
+          }
+          if (service.cookies?.length) {
+            const cookieSpan = document.createElement('span');
+            cookieSpan.className = 'km-service__cookies';
+            cookieSpan.textContent = ` (${service.cookies.join(', ')})`;
+            li.appendChild(cookieSpan);
+          }
+          servicesList.appendChild(li);
+        }
+        categoryEl.appendChild(servicesList);
+      }
+
       categoriesContainer.appendChild(categoryEl);
     }
 

@@ -216,6 +216,31 @@ export const bannerStyles = /* css */ `
     border-radius: 99px;
   }
 
+  /* --- Services list --- */
+
+  .km-services {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    font-size: 0.85em;
+  }
+
+  .km-service {
+    padding: 4px 0;
+    color: var(--km-text-secondary);
+  }
+
+  .km-service__name {
+    font-weight: 500;
+    color: var(--km-text);
+  }
+
+  .km-service__cookies {
+    font-family: monospace;
+    font-size: 0.9em;
+    opacity: 0.7;
+  }
+
   /* --- Toggle switch --- */
 
   .km-toggle {

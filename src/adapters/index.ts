@@ -18,3 +18,9 @@ export type { MixpanelLike, MixpanelAdapterOptions } from './mixpanel.js';
 
 export { createHubSpotAdapter } from './hubspot.js';
 export type { HubSpotAdapterOptions } from './hubspot.js';
+
+export { createPlausibleAdapter } from './plausible.js';
+export type { PlausibleAdapterOptions } from './plausible.js';
+
+export { createTikTokPixelAdapter } from './tiktok-pixel.js';
+export type { TikTokPixelAdapterOptions } from './tiktok-pixel.js';

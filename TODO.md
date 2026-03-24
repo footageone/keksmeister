@@ -52,13 +52,16 @@
 
 - [ ] Google Consent Mode v2 — test with real gtag
 - [x] Google Tag Manager dataLayer push on consent change
-- [ ] Per-service consent (not just per-category)
+- [x] Per-service display in settings modal (showServices config)
 - [ ] Cookie auto-scan: list cookies per category in the modal
 - [ ] Consent history: allow user to see when they last consented
 - [x] `<keksmeister-trigger>` — small floating button to re-open settings
-- [ ] Additional translations: fr, es, it, nl, pl
-- [ ] Opt-out mode (for non-EU visitors, CCPA style)
-- [ ] Additional adapters: Plausible (localStorage flag), Segment, TikTok Pixel
+- [x] Additional translations: fr, es, it, nl, pl (lazy-loaded via keksmeister/i18n/*)
+- [x] registerTranslation() API for runtime language registration
+- [x] Opt-out mode for non-EU visitors (CCPA style, `mode: 'opt-out'`)
+- [x] Plausible adapter (localStorage flag)
+- [x] TikTok Pixel adapter (grantConsent/revokeConsent)
+- [ ] Segment adapter
 - [ ] Adapter auto-detection: scan window for known globals and suggest adapters
 
 ## Phase 4: Ecosystem

@@ -35,6 +35,10 @@
     "./vue": {
       "types": "./dist/wrappers/vue.d.ts",
       "import": "./dist/wrappers/vue.js"
+    },
+    "./i18n/*": {
+      "import": "./dist/i18n/*.js",
+      "types": "./dist/i18n/*.d.ts"
     }
   },
   "files": [

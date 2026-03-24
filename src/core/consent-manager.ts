@@ -66,11 +66,23 @@ export class ConsentManager extends EventTarget {
     return Date.now() - consentDate > maxAgeMs;
   }
 
-  /** Check if a specific category is accepted. Required categories always return true. */
+  /** Whether this instance uses opt-out mode (CCPA). */
+  get isOptOut(): boolean {
+    return this.config.mode === 'opt-out';
+  }
+
+  /**
+   * Check if a specific category is accepted.
+   * - Required categories always return true.
+   * - In opt-out mode, categories default to true until explicitly declined.
+   * - In opt-in mode (default), categories default to false until explicitly accepted.
+   */
   isAccepted(categoryId: string): boolean {
     const category = this.config.categories.find((c) => c.id === categoryId);
     if (category?.required) return true;
-    return this.choices[categoryId] === true;
+    if (this.choices[categoryId] !== undefined) return this.choices[categoryId];
+    // No explicit choice yet — default depends on mode
+    return this.isOptOut;
   }
 
   /** Get a snapshot of all current choices. */

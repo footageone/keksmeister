@@ -359,4 +359,43 @@ describe('ConsentManager', () => {
       expect(manager2.shouldShowBanner).toBe(false);
     });
   });
+
+  describe('opt-out mode', () => {
+    it('categories default to accepted in opt-out mode', () => {
+      const manager = new ConsentManager(createConfig({ mode: 'opt-out' }));
+      expect(manager.isOptOut).toBe(true);
+      // No consent given yet, but in opt-out mode categories default to true
+      expect(manager.isAccepted('analytics')).toBe(true);
+      expect(manager.isAccepted('marketing')).toBe(true);
+    });
+
+    it('categories default to rejected in opt-in mode', () => {
+      const manager = new ConsentManager(createConfig({ mode: 'opt-in' }));
+      expect(manager.isOptOut).toBe(false);
+      expect(manager.isAccepted('analytics')).toBe(false);
+      expect(manager.isAccepted('marketing')).toBe(false);
+    });
+
+    it('defaults to opt-in when mode is not set', () => {
+      const manager = new ConsentManager(createConfig());
+      expect(manager.isOptOut).toBe(false);
+      expect(manager.isAccepted('analytics')).toBe(false);
+    });
+
+    it('explicit choices override opt-out defaults', () => {
+      const manager = new ConsentManager(createConfig({ mode: 'opt-out' }));
+      manager.saveCustom({ analytics: false, marketing: true });
+
+      expect(manager.isAccepted('analytics')).toBe(false);
+      expect(manager.isAccepted('marketing')).toBe(true);
+    });
+
+    it('required categories are always accepted regardless of mode', () => {
+      const manager = new ConsentManager(createConfig({ mode: 'opt-out' }));
+      expect(manager.isAccepted('essential')).toBe(true);
+
+      manager.rejectAll();
+      expect(manager.isAccepted('essential')).toBe(true);
+    });
+  });
 });
