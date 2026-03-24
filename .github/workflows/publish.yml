@@ -32,7 +32,8 @@ jobs:
       - name: Test
         run: bun run test
 
+      # Uses npm Trusted Publishers (OIDC) — no NPM_TOKEN needed.
+      # Configure at: npmjs.com → Package Settings → Trusted Publishers
+      # First publish must be done manually: npm login && npm publish --provenance --access public
       - name: Publish
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
