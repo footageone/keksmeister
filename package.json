@@ -1,6 +1,6 @@
 {
   "name": "keksmeister",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A modern, framework-agnostic cookie consent Web Component with Shadow DOM encapsulation. Built for GDPR/DSGVO compliance.",
   "type": "module",
   "main": "./dist/keksmeister.umd.cjs",
