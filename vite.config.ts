@@ -10,7 +10,7 @@ export default defineConfig({
       formats: ['es', 'umd'],
     },
     target: 'es2022',
-    minify: 'esbuild',
+    minify: true,
     sourcemap: true,
     rollupOptions: {
       output: {
