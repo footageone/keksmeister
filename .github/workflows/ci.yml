@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Test
+        run: bun run test
+
+      - name: Build
+        run: bun run build
+
+      - name: Check bundle size
+        run: |
+          ESM_SIZE=$(wc -c < dist/keksmeister.js | tr -d ' ')
+          GZIP_SIZE=$(gzip -c dist/keksmeister.js | wc -c | tr -d ' ')
+          echo "ESM: ${ESM_SIZE} bytes ($(echo "scale=2; $GZIP_SIZE / 1024" | bc) kB gzipped)"
+          if [ "$GZIP_SIZE" -gt 10240 ]; then
+            echo "::error::Bundle size exceeds 10 kB gzipped ($GZIP_SIZE bytes)"
+            exit 1
+          fi

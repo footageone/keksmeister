@@ -20,13 +20,12 @@
 - [x] Unit tests for ScriptBlocker (3 tests)
 - [x] Unit tests for ServiceRegistry (8 tests)
 - [x] Unit tests for PostHog adapter (6 tests)
-- [ ] Integration test: full consent flow with adapters
+- [x] Integration test: full consent flow with adapters (10 tests)
 
 ## CI/CD & Infrastructure
 
-- [ ] GitHub Actions: CI workflow (lint, typecheck, test on push/PR)
-- [ ] GitHub Actions: build and bundle size check on PR
-- [ ] GitHub Actions: npm publish workflow on release/tag
+- [x] GitHub Actions: CI workflow (typecheck, test, build, bundle size check)
+- [x] GitHub Actions: npm publish workflow on release/tag (with provenance)
 - [ ] GitHub Actions: deploy demo page to GitHub Pages
 - [ ] Conventional Commits: add commitlint + husky for commit message validation
 - [ ] Renovate / Dependabot for dependency updates
