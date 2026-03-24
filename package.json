@@ -75,7 +75,7 @@
   "homepage": "https://footageone.github.io/keksmeister/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/footageone/keksmeister.git"
+    "url": "git+https://github.com/footageone/keksmeister.git"
   },
   "bugs": {
     "url": "https://github.com/footageone/keksmeister/issues"
