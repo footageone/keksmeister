@@ -8,9 +8,16 @@
   <strong>Der Meister der Kekse</strong> — A modern, framework-agnostic cookie consent Web Component.
 </p>
 
+<p align="center">
+  <a href="https://www.npmjs.com/package/keksmeister"><img src="https://img.shields.io/npm/v/keksmeister" alt="npm version" /></a>
+  <a href="https://github.com/footageone/keksmeister/actions/workflows/ci.yml"><img src="https://github.com/footageone/keksmeister/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/footageone/keksmeister/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/keksmeister" alt="license" /></a>
+  <a href="https://footageone.github.io/keksmeister/"><img src="https://img.shields.io/badge/demo-live-brightgreen" alt="demo" /></a>
+</p>
+
 **Keksmeister** is a lightweight cookie consent library built as a Web Component with Shadow DOM encapsulation. It drops into any web application — Angular, React, Vue, Svelte, or plain HTML — without style conflicts or framework dependencies.
 
-Built for [footage.one](https://footage.one) with GDPR/DSGVO compliance as a first-class concern.
+Built for [footage.one](https://footage.one) with GDPR/DSGVO compliance as a first-class concern. [Live Demo](https://footageone.github.io/keksmeister/)
 
 ## Why another cookie consent library?
 
