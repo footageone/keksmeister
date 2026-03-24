@@ -82,11 +82,14 @@
     document.getElementById('analytics-status').style.background = '#d4edda';
   </script>
 
-  <!-- Keksmeister Web Component -->
+  <!-- Keksmeister Web Components -->
   <keksmeister-banner
     privacy-url="/datenschutz"
     lang="de"
   ></keksmeister-banner>
+
+  <!-- Floating cookie button to re-open settings -->
+  <keksmeister-trigger position="bottom-left"></keksmeister-trigger>
 
   <script type="module">
     import '../src/index.ts';

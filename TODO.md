@@ -28,7 +28,7 @@
 - [x] GitHub Actions: npm publish workflow on release/tag (with provenance)
 - [ ] GitHub Actions: deploy demo page to GitHub Pages
 - [ ] Conventional Commits: add commitlint + husky for commit message validation
-- [ ] Renovate / Dependabot for dependency updates
+- [x] Renovate for dependency updates
 - [ ] Bundle size tracking (e.g. size-limit or bundlesize)
 - [ ] Code coverage reporting
 
@@ -45,17 +45,17 @@
 - [x] Focus restoration after banner/modal close
 - [x] Public `manager` getter for ServiceRegistry integration
 - [x] Cleanup on disconnectedCallback (stop ScriptBlocker)
-- [ ] Consent expiry re-prompt (show banner again after N days)
+- [x] Consent expiry re-prompt (consentMaxAgeDays config option)
 - [ ] Live screen reader testing with VoiceOver/NVDA
 
 ## Phase 3: Extended Features
 
 - [ ] Google Consent Mode v2 — test with real gtag
-- [ ] Google Tag Manager dataLayer push on consent change
+- [x] Google Tag Manager dataLayer push on consent change
 - [ ] Per-service consent (not just per-category)
 - [ ] Cookie auto-scan: list cookies per category in the modal
 - [ ] Consent history: allow user to see when they last consented
-- [ ] `<keksmeister-trigger>` — small floating button to re-open settings
+- [x] `<keksmeister-trigger>` — small floating button to re-open settings
 - [ ] Additional translations: fr, es, it, nl, pl
 - [ ] Opt-out mode (for non-EU visitors, CCPA style)
 - [ ] Additional adapters: Plausible (localStorage flag), Segment, TikTok Pixel

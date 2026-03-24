@@ -46,9 +46,24 @@ export class ConsentManager extends EventTarget {
     return record.revision === this.getRevision();
   }
 
-  /** Returns true if the banner should be shown (no consent or outdated revision). */
+  /** Returns true if the banner should be shown (no consent, outdated revision, or expired). */
   get shouldShowBanner(): boolean {
-    return !this._hasConsented || !this.isConsentCurrent;
+    if (!this._hasConsented || !this.isConsentCurrent) return true;
+    if (this.isConsentExpired) return true;
+    return false;
+  }
+
+  /** Whether the consent has exceeded the configured consentMaxAgeDays. */
+  get isConsentExpired(): boolean {
+    const maxAgeDays = this.config.consentMaxAgeDays;
+    if (!maxAgeDays) return false;
+
+    const record = this.store.read();
+    if (!record) return false;
+
+    const consentDate = new Date(record.timestamp).getTime();
+    const maxAgeMs = maxAgeDays * 864e5;
+    return Date.now() - consentDate > maxAgeMs;
   }
 
   /** Check if a specific category is accepted. Required categories always return true. */
@@ -151,6 +166,9 @@ export class ConsentManager extends EventTarget {
     if (this.config.googleConsentMode) {
       this.updateGoogleConsentMode(choices);
     }
+
+    // Push to GTM dataLayer if available
+    this.pushToDataLayer(record);
   }
 
   private autoClear(
@@ -179,6 +197,20 @@ export class ConsentManager extends EventTarget {
       ad_user_data: choices['marketing'] ? 'granted' : 'denied',
       ad_personalization: choices['marketing'] ? 'granted' : 'denied',
       functionality_storage: choices['functional'] ? 'granted' : 'denied',
+    });
+  }
+
+  private pushToDataLayer(record: ConsentRecord): void {
+    const w = globalThis as Record<string, unknown>;
+    if (!Array.isArray(w.dataLayer)) return;
+
+    (w.dataLayer as unknown[]).push({
+      event: 'keksmeister_consent',
+      keksmeister: {
+        method: record.method,
+        revision: record.revision,
+        ...record.choices,
+      },
     });
   }
 

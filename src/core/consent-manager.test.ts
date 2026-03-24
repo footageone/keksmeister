@@ -294,4 +294,69 @@ describe('ConsentManager', () => {
       delete (globalThis as Record<string, unknown>).gtag;
     });
   });
+
+  describe('GTM dataLayer', () => {
+    it('pushes consent event to dataLayer when present', () => {
+      const dataLayer: unknown[] = [];
+      (globalThis as Record<string, unknown>).dataLayer = dataLayer;
+
+      const manager = new ConsentManager(createConfig());
+      manager.acceptAll();
+
+      expect(dataLayer).toHaveLength(1);
+      const pushed = dataLayer[0] as Record<string, unknown>;
+      expect(pushed.event).toBe('keksmeister_consent');
+      expect(pushed.keksmeister).toEqual(expect.objectContaining({
+        method: 'accept-all',
+        analytics: true,
+        marketing: true,
+      }));
+
+      delete (globalThis as Record<string, unknown>).dataLayer;
+    });
+
+    it('does not push if dataLayer is not present', () => {
+      // Should not throw
+      const manager = new ConsentManager(createConfig());
+      manager.acceptAll();
+    });
+  });
+
+  describe('consent expiry', () => {
+    it('shows banner when consent exceeds maxAgeDays', () => {
+      const config = createConfig({ consentMaxAgeDays: 180 });
+      const manager1 = new ConsentManager(config);
+      manager1.acceptAll();
+
+      // Manipulate the stored timestamp to be 181 days old
+      const store = manager1['store'];
+      const record = store.read()!;
+      record.timestamp = new Date(Date.now() - 181 * 864e5).toISOString();
+      store.write(record);
+
+      const manager2 = new ConsentManager(config);
+      expect(manager2.isConsentExpired).toBe(true);
+      expect(manager2.shouldShowBanner).toBe(true);
+    });
+
+    it('does not expire when maxAgeDays is not set', () => {
+      const config = createConfig();
+      const manager1 = new ConsentManager(config);
+      manager1.acceptAll();
+
+      const manager2 = new ConsentManager(config);
+      expect(manager2.isConsentExpired).toBe(false);
+      expect(manager2.shouldShowBanner).toBe(false);
+    });
+
+    it('does not expire when consent is still fresh', () => {
+      const config = createConfig({ consentMaxAgeDays: 180 });
+      const manager1 = new ConsentManager(config);
+      manager1.acceptAll();
+
+      const manager2 = new ConsentManager(config);
+      expect(manager2.isConsentExpired).toBe(false);
+      expect(manager2.shouldShowBanner).toBe(false);
+    });
+  });
 });

@@ -104,6 +104,12 @@ export interface KeksmeisterConfig {
   autoClearCookies?: boolean;
   /** If true, enable Google Consent Mode v2 integration (default: false) */
   googleConsentMode?: boolean;
+  /**
+   * Re-prompt for consent after this many days, even if the cookie hasn't expired.
+   * Useful for CNIL compliance (recommended: 180 days / 6 months).
+   * Default: undefined (no re-prompt, consent valid until cookie expires)
+   */
+  consentMaxAgeDays?: number;
 }
 
 /**

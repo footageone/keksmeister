@@ -6,8 +6,9 @@ export {
   ServiceRegistry,
 } from './core/index.js';
 
-// UI (Web Component)
+// UI (Web Components)
 export { KeksmeisterBanner } from './ui/index.js';
+export { KeksmeisterTrigger } from './ui/index.js';
 
 // Types
 export type {
@@ -24,9 +25,15 @@ export type {
 // i18n
 export { de, en, resolveTranslations } from './i18n/index.js';
 
-// Auto-register the Web Component when this module is imported
+// Auto-register Web Components when this module is imported
 import { KeksmeisterBanner } from './ui/keksmeister-banner.js';
+import { KeksmeisterTrigger } from './ui/keksmeister-trigger.js';
 
-if (typeof customElements !== 'undefined' && !customElements.get('keksmeister-banner')) {
-  customElements.define('keksmeister-banner', KeksmeisterBanner);
+if (typeof customElements !== 'undefined') {
+  if (!customElements.get('keksmeister-banner')) {
+    customElements.define('keksmeister-banner', KeksmeisterBanner);
+  }
+  if (!customElements.get('keksmeister-trigger')) {
+    customElements.define('keksmeister-trigger', KeksmeisterTrigger);
+  }
 }
