@@ -21,9 +21,6 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 22
-          registry-url: https://registry.npmjs.org
-          # Do NOT set token here — OIDC Trusted Publishers handle auth
-          token: ''
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -34,8 +31,10 @@ jobs:
       - name: Test
         run: bun run test
 
-      # Uses npm Trusted Publishers (OIDC) — no NPM_TOKEN needed.
-      # Configure at: npmjs.com → Package Settings → Trusted Publishers
-      # First publish must be done manually: npm login && npm publish --provenance --access public
+      # Configure .npmrc for OIDC Trusted Publishers (no token).
+      # setup-node's registry-url injects GITHUB_TOKEN which breaks OIDC auth.
+      - name: Configure npm registry
+        run: echo "registry=https://registry.npmjs.org/" > ~/.npmrc
+
       - name: Publish
         run: npm publish --provenance --access public
