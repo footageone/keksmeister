@@ -38,6 +38,13 @@ jobs:
           files: ./coverage/lcov.info
           fail_ci_if_error: false
 
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./test-results/junit.xml
+
       - name: Check bundle size
         run: |
           ESM_SIZE=$(wc -c < dist/keksmeister.js | tr -d ' ')
