@@ -60,3 +60,19 @@ bun run build      # Production build
 bun run test       # Run tests
 bun run typecheck  # TypeScript check
 ```
+
+## Publishing / Releases
+
+**Never publish manually with `npm publish`.** Use `gh release create` instead:
+
+```sh
+# Bump version in package.json first, then:
+gh release create v0.2.0 --generate-notes
+```
+
+This triggers the `publish.yml` GitHub Actions workflow which:
+1. Builds the library
+2. Runs tests
+3. Publishes to npm with provenance (via OIDC Trusted Publishers, no token needed)
+
+The npm package uses Trusted Publishers — authentication happens automatically via GitHub's OIDC token.
