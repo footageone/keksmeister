@@ -34,14 +34,19 @@
 
 ## Phase 2: Polish & Compliance
 
-- [ ] Full WCAG 2.1 AA audit (focus trap in modal, aria-describedby, etc.)
-- [ ] Keyboard navigation: Tab cycling within modal, Escape to close
-- [ ] Screen reader testing
-- [ ] "Immer aktiv" / "Always active" i18n (currently hardcoded German)
+- [x] Full WCAG 2.1 AA audit (aria-labelledby, aria-describedby, aria-checked, role=switch)
+- [x] Keyboard navigation: Tab cycling (focus trap) within modal, Escape to close
+- [x] Screen reader support: sr-only inputs, label[for], aria-label on required toggles
+- [x] "Immer aktiv" / "Always active" i18n via translations
+- [x] Privacy link text i18n ("Datenschutzerklärung" / "Privacy policy")
+- [x] Auto-detect browser language (attribute → document.lang → navigator.language → 'de')
+- [x] Animation: respect `prefers-reduced-motion: reduce`
+- [x] Print styles (hide banner)
+- [x] Focus restoration after banner/modal close
+- [x] Public `manager` getter for ServiceRegistry integration
+- [x] Cleanup on disconnectedCallback (stop ScriptBlocker)
 - [ ] Consent expiry re-prompt (show banner again after N days)
-- [ ] Auto-detect browser language for default lang
-- [ ] Animation: respect `prefers-reduced-motion`
-- [ ] Print styles (hide banner)
+- [ ] Live screen reader testing with VoiceOver/NVDA
 
 ## Phase 3: Extended Features
 

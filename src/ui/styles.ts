@@ -226,10 +226,15 @@ export const bannerStyles = /* css */ `
   }
 
   .km-toggle input {
-    opacity: 0;
-    width: 0;
-    height: 0;
     position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .km-toggle__track {
@@ -319,6 +324,28 @@ export const bannerStyles = /* css */ `
     }
     .km-modal__actions {
       flex-direction: column;
+    }
+  }
+
+  /* --- Reduced motion --- */
+
+  @media (prefers-reduced-motion: reduce) {
+    .km-banner,
+    .km-overlay,
+    .km-modal,
+    .km-toggle__track,
+    .km-toggle__track::after,
+    .km-btn {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+
+  /* --- Print --- */
+
+  @media print {
+    :host {
+      display: none !important;
     }
   }
 `;

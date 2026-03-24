@@ -16,7 +16,9 @@ export const de: KeksmeisterTranslations = {
     save: 'Auswahl speichern',
     acceptAll: 'Alle akzeptieren',
     rejectAll: 'Alle ablehnen',
+    alwaysActive: 'Immer aktiv',
   },
+  privacyLink: 'Datenschutzerklärung',
   categories: {
     essential: {
       label: 'Notwendig',

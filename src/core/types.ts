@@ -67,7 +67,11 @@ export interface KeksmeisterTranslations {
     save: string;
     acceptAll: string;
     rejectAll: string;
+    /** Label shown on required categories (default: "Always active" / "Immer aktiv") */
+    alwaysActive?: string;
   };
+  /** Label for the privacy policy link */
+  privacyLink?: string;
   /** Per-category label overrides (keyed by category id) */
   categories?: Record<string, { label?: string; description?: string }>;
 }
