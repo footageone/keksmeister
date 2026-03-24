@@ -28,6 +28,8 @@ jobs:
 
       - name: Build
         run: bun run build
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
