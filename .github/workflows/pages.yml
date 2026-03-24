@@ -41,6 +41,7 @@ jobs:
           sed -i "s|../src/index.ts|./keksmeister.js|" _site/index.html
           cp dist/keksmeister.js _site/keksmeister.js
           cp dist/keksmeister.js.map _site/keksmeister.js.map
+          cp assets/keksmeister-logo.jpg _site/keksmeister-logo.jpg
 
       - uses: actions/configure-pages@v5
 

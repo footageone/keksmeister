@@ -1,6 +1,12 @@
-# Keksmeister 🍪
+<p align="center">
+  <img src="assets/keksmeister-logo.jpg" alt="Keksmeister Logo" width="200" />
+</p>
 
-> Der Meister der Kekse — A modern, framework-agnostic cookie consent Web Component.
+<h1 align="center">Keksmeister</h1>
+
+<p align="center">
+  <strong>Der Meister der Kekse</strong> — A modern, framework-agnostic cookie consent Web Component.
+</p>
 
 **Keksmeister** is a lightweight cookie consent library built as a Web Component with Shadow DOM encapsulation. It drops into any web application — Angular, React, Vue, Svelte, or plain HTML — without style conflicts or framework dependencies.
 
