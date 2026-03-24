@@ -1,6 +1,6 @@
 {
   "name": "keksmeister",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A modern, framework-agnostic cookie consent Web Component with Shadow DOM encapsulation. Built for GDPR/DSGVO compliance.",
   "type": "module",
   "main": "./dist/keksmeister.umd.cjs",
@@ -48,7 +48,7 @@
   ],
   "scripts": {
     "dev": "vite serve demo",
-    "build": "vite build && tsc --emitDeclarationOnly",
+    "build": "vite build && tsc -p tsconfig.build.json",
     "preview": "vite preview",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
