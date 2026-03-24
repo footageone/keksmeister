@@ -249,8 +249,9 @@ export class KeksmeisterBanner extends HTMLElement {
         labelContainer.appendChild(badge);
       }
 
-      const toggle = document.createElement('div');
+      const toggle = document.createElement('label');
       toggle.className = 'km-toggle';
+      toggle.setAttribute('for', inputId);
       const input = document.createElement('input');
       input.type = 'checkbox';
       input.id = inputId;
