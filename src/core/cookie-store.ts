@@ -23,6 +23,10 @@ export class CookieStore {
   constructor(options: CookieStoreOptions = {}) {
     this.name = options.cookieName ?? DEFAULT_COOKIE_NAME;
     this.lifetimeDays = options.cookieLifetimeDays ?? DEFAULT_LIFETIME_DAYS;
+
+    if (options.cookieDomain && /[;\s=]/.test(options.cookieDomain)) {
+      throw new Error(`[keksmeister] Invalid cookieDomain: "${options.cookieDomain}"`);
+    }
     this.domain = options.cookieDomain;
   }
 

@@ -3,6 +3,8 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
 /**
  * Mixpanel adapter.
  *
+ * @see https://docs.mixpanel.com/docs/privacy/end-user-data-management#opt-out-users
+ *
  * Initialize Mixpanel with `opt_out_tracking_by_default: true`:
  *
  * ```js

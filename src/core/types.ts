@@ -105,6 +105,18 @@ export interface KeksmeisterConfig {
   /** If true, enable Google Consent Mode v2 integration (default: false) */
   googleConsentMode?: boolean;
   /**
+   * Map Google Consent Mode signals to custom category IDs.
+   * Only used when `googleConsentMode` is true.
+   * Defaults: analytics_storage → 'analytics', ad_storage → 'marketing', functionality_storage → 'functional'
+   */
+  googleConsentModeMapping?: {
+    analytics_storage?: string;
+    ad_storage?: string;
+    ad_user_data?: string;
+    ad_personalization?: string;
+    functionality_storage?: string;
+  };
+  /**
    * Re-prompt for consent after this many days, even if the cookie hasn't expired.
    * Useful for CNIL compliance (recommended: 180 days / 6 months).
    * Default: undefined (no re-prompt, consent valid until cookie expires)

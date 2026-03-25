@@ -5,6 +5,8 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
  *
  * Integrates PostHog's opt-in/opt-out mechanism with Keksmeister.
  *
+ * @see https://posthog.com/docs/libraries/js#opt-users-out
+ *
  * PostHog should be initialized with `opt_out_capturing_by_default: true`
  * so no data is captured before consent:
  *

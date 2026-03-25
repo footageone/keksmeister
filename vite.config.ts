@@ -20,24 +20,5 @@ export default defineConfig({
     target: 'es2022',
     minify: true,
     sourcemap: true,
-    rollupOptions: {
-      output: {
-        assetFileNames: 'keksmeister.[ext]',
-      },
-    },
-  },
-  test: {
-    environment: 'happy-dom',
-    include: ['src/**/*.test.ts'],
-    reporters: ['default', 'junit'],
-    outputFile: {
-      junit: './test-results/junit.xml',
-    },
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'lcov', 'json-summary'],
-      include: ['src/**/*.ts'],
-      exclude: ['src/**/*.test.ts', 'src/**/index.ts'],
-    },
   },
 });

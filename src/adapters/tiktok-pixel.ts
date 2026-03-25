@@ -3,6 +3,8 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
 /**
  * TikTok Pixel adapter.
  *
+ * @see https://ads.tiktok.com/marketing_api/docs?id=1739584860883969
+ *
  * TikTok Pixel uses a consent API similar to Meta Pixel:
  *
  * ```js

@@ -3,6 +3,8 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
 /**
  * Matomo/Piwik analytics adapter.
  *
+ * @see https://developer.matomo.org/guides/tracking-consent
+ *
  * Matomo should be initialized with `requireConsent` or `requireCookieConsent`:
  *
  * ```js

@@ -188,7 +188,7 @@ export class ConsentManager extends EventTarget {
     current: ConsentChoices
   ): void {
     for (const cat of this.config.categories) {
-      if (previous[cat.id] && !current[cat.id] && cat.services) {
+      if (previous[cat.id] !== false && !current[cat.id] && cat.services) {
         const cookieNames = cat.services.flatMap((s) => s.cookies ?? []);
         if (cookieNames.length > 0) {
           this.store.clearCookies(cookieNames);
@@ -203,12 +203,19 @@ export class ConsentManager extends EventTarget {
       | undefined;
     if (typeof gtag !== 'function') return;
 
+    const m = this.config.googleConsentModeMapping;
+    const analyticsCategory = m?.analytics_storage ?? 'analytics';
+    const marketingCategory = m?.ad_storage ?? 'marketing';
+    const adUserDataCategory = m?.ad_user_data ?? marketingCategory;
+    const adPersonalizationCategory = m?.ad_personalization ?? marketingCategory;
+    const functionalCategory = m?.functionality_storage ?? 'functional';
+
     gtag('consent', 'update', {
-      analytics_storage: choices['analytics'] ? 'granted' : 'denied',
-      ad_storage: choices['marketing'] ? 'granted' : 'denied',
-      ad_user_data: choices['marketing'] ? 'granted' : 'denied',
-      ad_personalization: choices['marketing'] ? 'granted' : 'denied',
-      functionality_storage: choices['functional'] ? 'granted' : 'denied',
+      analytics_storage: choices[analyticsCategory] ? 'granted' : 'denied',
+      ad_storage: choices[marketingCategory] ? 'granted' : 'denied',
+      ad_user_data: choices[adUserDataCategory] ? 'granted' : 'denied',
+      ad_personalization: choices[adPersonalizationCategory] ? 'granted' : 'denied',
+      functionality_storage: choices[functionalCategory] ? 'granted' : 'denied',
     });
   }
 

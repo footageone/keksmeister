@@ -3,6 +3,8 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
 /**
  * Plausible Analytics adapter.
  *
+ * @see https://plausible.io/docs/excluding#exclude-yourself-from-the-analytics
+ *
  * Plausible is privacy-focused and doesn't use cookies, so consent is
  * technically not required. However, some site owners want to respect
  * a user's explicit opt-out preference.
