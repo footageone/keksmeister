@@ -35,7 +35,7 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
 
 /** Minimal PostHog instance interface (only what we need). */
 export interface PostHogLike {
-  opt_in_capturing: (options?: { enable_persistence?: boolean }) => void;
+  opt_in_capturing: (options?: Record<string, unknown>) => void;
   opt_out_capturing: () => void;
   has_opted_in_capturing: () => boolean;
   has_opted_out_capturing: () => boolean;
