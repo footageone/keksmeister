@@ -19,6 +19,7 @@ export const de: KeksmeisterTranslations = {
     alwaysActive: 'Immer aktiv',
   },
   privacyLink: 'Datenschutzerklärung',
+  trigger: { label: 'Cookie-Einstellungen' },
   categories: {
     essential: {
       label: 'Notwendig',

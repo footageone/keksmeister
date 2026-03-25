@@ -72,6 +72,8 @@ export interface KeksmeisterTranslations {
   };
   /** Label for the privacy policy link */
   privacyLink?: string;
+  /** Label for the trigger button (default: "Cookie-Einstellungen" / "Cookie Settings") */
+  trigger?: { label?: string };
   /** Per-category label overrides (keyed by category id) */
   categories?: Record<string, { label?: string; description?: string }>;
 }
