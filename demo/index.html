@@ -91,6 +91,29 @@
     lang="de"
   ></keksmeister-banner>
 
+  <h2>Trigger-Varianten</h2>
+  <p>Der <code>&lt;keksmeister-trigger&gt;</code> kann als Icon oder als Text-Button dargestellt werden:</p>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 16px;">
+    <div>
+      <p style="margin-bottom:4px; font-size:13px; color:#888;">variant="text" (default label via i18n):</p>
+      <keksmeister-trigger variant="text"></keksmeister-trigger>
+    </div>
+    <div>
+      <p style="margin-bottom:4px; font-size:13px; color:#888;">variant="text" label="Cookies verwalten":</p>
+      <keksmeister-trigger variant="text" label="Cookies verwalten"></keksmeister-trigger>
+    </div>
+  </div>
+
+  <pre>&lt;!-- Floating icon button (default) --&gt;
+&lt;keksmeister-trigger&gt;&lt;/keksmeister-trigger&gt;
+
+&lt;!-- Text button for footer / privacy page --&gt;
+&lt;keksmeister-trigger variant="text"&gt;&lt;/keksmeister-trigger&gt;
+
+&lt;!-- Custom label --&gt;
+&lt;keksmeister-trigger variant="text" label="Cookies verwalten"&gt;&lt;/keksmeister-trigger&gt;</pre>
+
   <!-- Floating cookie button to re-open settings -->
   <keksmeister-trigger position="bottom-left"></keksmeister-trigger>
 
