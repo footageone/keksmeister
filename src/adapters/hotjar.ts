@@ -3,6 +3,11 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
 /**
  * Hotjar adapter.
  *
+ * @see https://help.hotjar.com/hc/en-us/articles/115011789248-Hotjar-Compliance-with-GDPR
+ * @see https://help.hotjar.com/hc/en-us/articles/360002735873-Using-Hotjar-with-a-Consent-Manager
+ *
+ * Uses Hotjar's consent API: `hj('consent', 'granted')` / `hj('consent', 'denied')`.
+ *
  * ```js
  * registry.register(createHotjarAdapter());
  * ```
@@ -32,10 +37,10 @@ export function createHotjarAdapter(
     id: options.id ?? 'hotjar',
     category: options.category ?? 'analytics',
     onConsent: () => {
-      getHj()?.('consent', 'optIn');
+      getHj()?.('consent', 'granted');
     },
     onRevoke: () => {
-      getHj()?.('consent', 'optOut');
+      getHj()?.('consent', 'denied');
     },
   };
 }

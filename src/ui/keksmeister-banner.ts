@@ -34,6 +34,7 @@ export class KeksmeisterBanner extends HTMLElement {
   private _config: KeksmeisterConfig | null = null;
   private _view: 'banner' | 'modal' | 'hidden' = 'banner';
   private previouslyFocusedElement: HTMLElement | null = null;
+  private _listenerAbort: AbortController | null = null;
 
   /** Set the full config programmatically. */
   set config(value: KeksmeisterConfig) {
@@ -67,6 +68,7 @@ export class KeksmeisterBanner extends HTMLElement {
 
   disconnectedCallback(): void {
     this.blocker?.stop();
+    this._listenerAbort?.abort();
   }
 
   /** Open the settings modal programmatically. */
@@ -74,6 +76,7 @@ export class KeksmeisterBanner extends HTMLElement {
     this.previouslyFocusedElement = document.activeElement as HTMLElement;
     this._view = 'modal';
     this.render();
+    this.dispatchEvent(new CustomEvent('keksmeister:open'));
   }
 
   /** Show the banner again (e.g. from a "Cookie Settings" footer link). */
@@ -81,6 +84,7 @@ export class KeksmeisterBanner extends HTMLElement {
     this.previouslyFocusedElement = document.activeElement as HTMLElement;
     this._view = 'banner';
     this.render();
+    this.dispatchEvent(new CustomEvent('keksmeister:open'));
   }
 
   // --- Private ---
@@ -99,6 +103,9 @@ export class KeksmeisterBanner extends HTMLElement {
 
   private render(): void {
     if (!this.shadowRoot) return;
+
+    this._listenerAbort?.abort();
+    this._listenerAbort = new AbortController();
 
     this.shadowRoot.replaceChildren();
 
@@ -171,7 +178,7 @@ export class KeksmeisterBanner extends HTMLElement {
       const link = document.createElement('a');
       link.href = this._config.privacyUrl;
       link.target = '_blank';
-      link.rel = 'noopener';
+      link.rel = 'noopener noreferrer';
       link.textContent = this.translations.privacyLink ?? 'Datenschutzerklärung';
       privacyDiv.appendChild(link);
       inner.appendChild(privacyDiv);
@@ -251,15 +258,12 @@ export class KeksmeisterBanner extends HTMLElement {
 
       const toggle = document.createElement('label');
       toggle.className = 'km-toggle';
-      toggle.setAttribute('for', inputId);
       const input = document.createElement('input');
       input.type = 'checkbox';
       input.id = inputId;
       input.dataset.category = cat.id;
       input.checked = checked;
       input.disabled = cat.required === true;
-      input.setAttribute('role', 'switch');
-      input.setAttribute('aria-checked', String(checked));
       if (description) {
         input.setAttribute('aria-describedby', descriptionId);
       }
@@ -337,6 +341,8 @@ export class KeksmeisterBanner extends HTMLElement {
   }
 
   private bindBannerEvents(): void {
+    const signal = this._listenerAbort!.signal;
+
     this.shadowRoot?.addEventListener('click', (e) => {
       const target = (e.target as HTMLElement).closest<HTMLElement>('[data-action]');
       if (!target) return;
@@ -356,7 +362,7 @@ export class KeksmeisterBanner extends HTMLElement {
           this.render();
           break;
       }
-    });
+    }, { signal });
 
     // Escape closes the banner
     this.shadowRoot?.addEventListener('keydown', (e) => {
@@ -366,10 +372,12 @@ export class KeksmeisterBanner extends HTMLElement {
         const first = this.shadowRoot?.querySelector<HTMLElement>('button');
         first?.focus();
       }
-    });
+    }, { signal });
   }
 
   private bindModalEvents(): void {
+    const signal = this._listenerAbort!.signal;
+
     this.shadowRoot?.addEventListener('click', (e) => {
       const target = (e.target as HTMLElement).closest<HTMLElement>('[data-action]');
       if (!target) return;
@@ -394,15 +402,7 @@ export class KeksmeisterBanner extends HTMLElement {
           }
           break;
       }
-    });
-
-    // Update aria-checked when toggles change
-    this.shadowRoot?.addEventListener('change', (e) => {
-      const input = e.target as HTMLInputElement;
-      if (input.dataset.category) {
-        input.setAttribute('aria-checked', String(input.checked));
-      }
-    });
+    }, { signal });
 
     // Keyboard: Escape closes modal, Tab trapping
     const modal = this.shadowRoot?.querySelector<HTMLElement>('.km-modal');
@@ -417,7 +417,7 @@ export class KeksmeisterBanner extends HTMLElement {
         if (ke.key === 'Tab') {
           this.handleTabTrap(ke, modal);
         }
-      });
+      }, { signal });
     }
   }
 
@@ -495,7 +495,7 @@ export class KeksmeisterBanner extends HTMLElement {
 
     if (categoriesAttr) {
       try {
-        const ids = JSON.parse(categoriesAttr) as string[];
+        const ids = (JSON.parse(categoriesAttr) as string[]).filter((id) => id !== 'essential');
         categories = [
           { id: 'essential', label: 'Essential', required: true },
           ...ids.map((id) => ({ id, label: id })),

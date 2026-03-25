@@ -50,18 +50,21 @@ export interface ServiceAdapter {
 export class ServiceRegistry {
   private adapters: ServiceAdapter[] = [];
   private manager: ConsentManager;
+  private consentHandler = () => this.syncAll();
+  private revokeHandler = () => this.revokeAll();
 
   constructor(manager: ConsentManager) {
     this.manager = manager;
 
     // Listen for consent changes
-    this.manager.addEventListener('keksmeister:consent', () => {
-      this.syncAll();
-    });
+    this.manager.addEventListener('keksmeister:consent', this.consentHandler);
+    this.manager.addEventListener('keksmeister:revoke', this.revokeHandler);
+  }
 
-    this.manager.addEventListener('keksmeister:revoke', () => {
-      this.revokeAll();
-    });
+  /** Remove event listeners and clean up. */
+  destroy(): void {
+    this.manager.removeEventListener('keksmeister:consent', this.consentHandler);
+    this.manager.removeEventListener('keksmeister:revoke', this.revokeHandler);
   }
 
   /** Register a service adapter. Immediately syncs its state. */

@@ -3,6 +3,8 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
 /**
  * Meta (Facebook) Pixel adapter.
  *
+ * @see https://developers.facebook.com/docs/meta-pixel/implementation/gdpr
+ *
  * The Meta Pixel should be initialized with consent revoked:
  *
  * ```js
@@ -41,7 +43,7 @@ export function createMetaPixelAdapter(
     id: options.id ?? 'meta-pixel',
     category: options.category ?? 'marketing',
     onConsent: () => {
-      getFbq()?.('consent', 'grant');
+      getFbq()?.('consent', 'granted');
     },
     onRevoke: () => {
       getFbq()?.('consent', 'revoke');

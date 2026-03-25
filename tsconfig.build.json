@@ -3,10 +3,10 @@
   "compilerOptions": {
     "emitDeclarationOnly": false,
     "declaration": true,
-    "declarationDir": null,
+
     "outDir": "./dist",
     "sourceMap": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "demo", "src/**/*.test.ts", "src/index.ts"]
+  "exclude": ["node_modules", "dist", "demo", "src/**/*.test.ts"]
 }

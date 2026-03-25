@@ -3,6 +3,11 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
 /**
  * HubSpot tracking adapter.
  *
+ * @see https://developers.hubspot.com/docs/reference/api/cms/cookie-consent-banner#external-cookie-consent-banner-integration
+ * @see https://developers.hubspot.com/docs/reference/api/cms/cookie-consent-banner
+ *
+ * Uses the HubSpot `_hsp` queue with `setHubSpotConsent` for granting/revoking consent.
+ *
  * Disable HubSpot's own cookie banner first:
  *
  * ```js
@@ -29,6 +34,12 @@ export interface HubSpotAdapterOptions {
   category?: string;
   /** Service id (default: 'hubspot') */
   id?: string;
+  /** Grant HubSpot analytics consent (default: true) */
+  analyticsConsent?: boolean;
+  /** Grant HubSpot advertisement consent (default: true) */
+  advertisementConsent?: boolean;
+  /** Grant HubSpot functionality consent (default: true) */
+  functionalityConsent?: boolean;
 }
 
 /**
@@ -43,11 +54,18 @@ export function createHubSpotAdapter(
     onConsent: () => {
       getHsp().push([
         'setHubSpotConsent',
-        { analytics: true, advertisement: true, functionality: true },
+        {
+          analytics: options.analyticsConsent ?? true,
+          advertisement: options.advertisementConsent ?? true,
+          functionality: options.functionalityConsent ?? true,
+        },
       ]);
     },
     onRevoke: () => {
-      getHsp().push(['revokeCookieConsent']);
+      getHsp().push([
+        'setHubSpotConsent',
+        { analytics: false, advertisement: false, functionality: false },
+      ]);
     },
   };
 }

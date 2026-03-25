@@ -117,7 +117,7 @@ describe('Integration: Full consent flow', () => {
     }));
 
     // Verify: Meta Pixel granted
-    expect(fbqMock).toHaveBeenCalledWith('consent', 'grant');
+    expect(fbqMock).toHaveBeenCalledWith('consent', 'granted');
 
     // Verify: blocked script was activated (replaced with real script)
     const blocked = document.querySelector('script[data-keksmeister="analytics"]');
@@ -279,11 +279,11 @@ describe('Integration: Full consent flow', () => {
     registry.register(createHotjarAdapter());
 
     manager.acceptAll();
-    expect(hjMock).toHaveBeenCalledWith('consent', 'optIn');
+    expect(hjMock).toHaveBeenCalledWith('consent', 'granted');
 
     hjMock.mockClear();
     manager.saveCustom({ analytics: false, marketing: false });
-    expect(hjMock).toHaveBeenCalledWith('consent', 'optOut');
+    expect(hjMock).toHaveBeenCalledWith('consent', 'denied');
 
     delete (globalThis as Record<string, unknown>).hj;
   });
@@ -304,7 +304,7 @@ describe('Integration: Full consent flow', () => {
     manager.acceptAll();
 
     expect(posthog.opt_in_capturing).toHaveBeenCalledOnce();
-    expect(hjMock).toHaveBeenCalledWith('consent', 'optIn');
+    expect(hjMock).toHaveBeenCalledWith('consent', 'granted');
 
     delete (globalThis as Record<string, unknown>).hj;
   });

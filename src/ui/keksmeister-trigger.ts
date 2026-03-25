@@ -75,7 +75,7 @@ export class KeksmeisterTrigger extends HTMLElement {
       }
 
       button:focus-visible {
-        outline: 2px solid var(--km-trigger-bg);
+        outline: 2px solid var(--km-trigger-color);
         outline-offset: 2px;
       }
 
