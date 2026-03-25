@@ -1,6 +1,6 @@
 {
   "name": "keksmeister",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A modern, framework-agnostic cookie consent Web Component with Shadow DOM encapsulation. Built for GDPR/DSGVO compliance.",
   "type": "module",
   "main": "./dist/keksmeister.umd.cjs",
@@ -75,7 +75,7 @@
   "homepage": "https://footageone.github.io/keksmeister/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/footageone/keksmeister.git"
+    "url": "https://github.com/footageone/keksmeister"
   },
   "bugs": {
     "url": "https://github.com/footageone/keksmeister/issues"
