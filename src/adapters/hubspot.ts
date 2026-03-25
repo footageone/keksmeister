@@ -6,7 +6,15 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
  * @see https://developers.hubspot.com/docs/reference/api/cms/cookie-consent-banner#external-cookie-consent-banner-integration
  * @see https://developers.hubspot.com/docs/reference/api/cms/cookie-consent-banner
  *
- * Uses the HubSpot `_hsp` queue with `setHubSpotConsent` for granting/revoking consent.
+ * Documented _hsp queue commands (from HubSpot docs):
+ * - `_hsp.push(['revokeCookieConsent'])` — removes HubSpot cookies, visitor sees banner again
+ * - `_hsp.push(['showBanner'])` — resurface the consent banner
+ * - `_hsp.push(['addPrivacyConsentListener', fn])` — listen for consent changes
+ * - `_hsp.push(['setHubSpotConsent', { analytics, advertisement, functionality }])` — set consent state (third-party integration)
+ *
+ * For third-party consent banners, `setHubSpotConsent` is the correct approach.
+ * Each field accepts a boolean. This does NOT persist in HubSpot's own cookie —
+ * the caller (Keksmeister) manages persistence.
  *
  * Disable HubSpot's own cookie banner first:
  *

@@ -5,6 +5,12 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
  *
  * @see https://docs.mixpanel.com/docs/privacy/end-user-data-management#opt-out-users
  *
+ * Documented API methods (from Mixpanel docs):
+ * - `mixpanel.opt_in_tracking()` — enable tracking
+ * - `mixpanel.opt_out_tracking()` — disable tracking
+ * - `mixpanel.has_opted_in_tracking()` — check if opted in
+ * - `mixpanel.has_opted_out_tracking()` — check if opted out
+ *
  * Initialize Mixpanel with `opt_out_tracking_by_default: true`:
  *
  * ```js

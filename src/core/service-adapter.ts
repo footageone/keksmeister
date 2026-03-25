@@ -4,7 +4,7 @@ import type { ConsentManager } from './consent-manager.js';
  * A ServiceAdapter controls a third-party service that is managed
  * programmatically (via JavaScript API) rather than by script blocking.
  *
- * Many modern analytics libraries (PostHog, Matomo, Mixpanel, Hotjar,
+ * Many modern analytics libraries (PostHog, Matomo, Mixpanel,
  * Meta Pixel, etc.) provide their own opt-in/opt-out mechanisms. These
  * services are typically already loaded on the page and just need to be
  * told whether they have consent or not.

@@ -5,6 +5,11 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
  *
  * @see https://ads.tiktok.com/marketing_api/docs?id=1739584860883969
  *
+ * Documented consent API methods (from TikTok docs):
+ * - `ttq.grantConsent()` — enable tracking
+ * - `ttq.revokeConsent()` — disable tracking
+ * - `ttq.holdConsent()` — pause consent status
+ *
  * TikTok Pixel uses a consent API similar to Meta Pixel:
  *
  * ```js

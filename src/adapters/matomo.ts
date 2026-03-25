@@ -5,6 +5,13 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
  *
  * @see https://developer.matomo.org/guides/tracking-consent
  *
+ * Documented _paq commands (from Matomo docs):
+ * - `_paq.push(['requireConsent'])` — block all tracking until consent
+ * - `_paq.push(['requireCookieConsent'])` — allow cookieless tracking, block cookies
+ * - `_paq.push(['setConsentGiven'])` / `_paq.push(['setCookieConsentGiven'])` — grant (external persistence)
+ * - `_paq.push(['rememberConsentGiven'])` / `_paq.push(['rememberCookieConsentGiven'])` — grant (Matomo persistence)
+ * - `_paq.push(['forgetConsentGiven'])` / `_paq.push(['forgetCookieConsentGiven'])` — revoke
+ *
  * Matomo should be initialized with `requireConsent` or `requireCookieConsent`:
  *
  * ```js

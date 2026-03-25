@@ -7,6 +7,12 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
  *
  * @see https://posthog.com/docs/libraries/js#opt-users-out
  *
+ * Documented API methods (from PostHog docs):
+ * - `posthog.opt_in_capturing()` — enable capturing
+ * - `posthog.opt_out_capturing()` — disable capturing
+ * - `posthog.has_opted_in_capturing()` — check if opted in
+ * - `posthog.has_opted_out_capturing()` — check if opted out
+ *
  * PostHog should be initialized with `opt_out_capturing_by_default: true`
  * so no data is captured before consent:
  *

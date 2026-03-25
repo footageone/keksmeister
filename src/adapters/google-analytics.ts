@@ -6,6 +6,12 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
  * @see https://developers.google.com/tag-platform/security/guides/consent?consentmode=advanced
  * @see https://support.google.com/analytics/answer/9976101
  *
+ * Documented consent API (from Google docs):
+ * - `gtag('consent', 'default', { ... })` — set initial consent state
+ * - `gtag('consent', 'update', { ... })` — update consent state
+ * - Valid signals: `analytics_storage`, `ad_storage`, `ad_user_data`, `ad_personalization`
+ * - Valid values: `'granted'` | `'denied'`
+ *
  * This adapter uses Google's Consent Mode API (`gtag('consent', 'update', ...)`)
  * instead of script blocking. GA4 continues to run but respects the consent
  * state — sending cookieless pings when denied, full tracking when granted.

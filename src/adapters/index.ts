@@ -10,8 +10,6 @@ export type { GoogleAnalyticsAdapterOptions, GoogleAdsAdapterOptions } from './g
 export { createMetaPixelAdapter } from './meta-pixel.js';
 export type { MetaPixelAdapterOptions } from './meta-pixel.js';
 
-export { createHotjarAdapter } from './hotjar.js';
-export type { HotjarAdapterOptions } from './hotjar.js';
 
 export { createMixpanelAdapter } from './mixpanel.js';
 export type { MixpanelLike, MixpanelAdapterOptions } from './mixpanel.js';

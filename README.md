@@ -47,7 +47,7 @@ We evaluated every major open-source consent library and found that none combine
 - **Tiny bundle** — Target < 8 kB gzipped
 - **GDPR/DSGVO compliant** — Accept All + Reject All on first layer (equal prominence), granular categories, consent versioning
 - **Script blocking** — `data-keksmeister` attribute blocks scripts until consent
-- **Service adapters** — Programmatic opt-in/opt-out for PostHog, Matomo, GA4, Meta Pixel, Hotjar, Mixpanel, HubSpot
+- **Service adapters** — Programmatic opt-in/opt-out for PostHog, Matomo, GA4, Meta Pixel, Mixpanel, HubSpot, Plausible, TikTok Pixel
 - **Auto-clear cookies** — Revoked categories' cookies are automatically removed
 - **Google Consent Mode v2** — Built-in `gtag('consent', 'update', ...)` integration
 - **CSS Custom Properties** — Fully themeable from outside Shadow DOM
@@ -161,9 +161,51 @@ registry.register(createMetaPixelAdapter());
 | Google Analytics 4 | `keksmeister/adapters/google-analytics` | analytics |
 | Google Ads | `keksmeister/adapters/google-analytics` | marketing |
 | Meta Pixel | `keksmeister/adapters/meta-pixel` | marketing |
-| Hotjar | `keksmeister/adapters/hotjar` | analytics |
 | Mixpanel | `keksmeister/adapters/mixpanel` | analytics |
 | HubSpot | `keksmeister/adapters/hubspot` | marketing |
+| Plausible | `keksmeister/adapters/plausible` | analytics |
+| TikTok Pixel | `keksmeister/adapters/tiktok-pixel` | marketing |
+
+#### Adapter vs. Script Blocking — Which to use?
+
+Not every tool has a consent API. Some must be blocked from loading entirely until consent is given. Here's a guide for common tools:
+
+| Tool | Approach | Reason |
+|------|----------|--------|
+| **PostHog** | Adapter | Has `opt_in_capturing()` / `opt_out_capturing()` API |
+| **Matomo** | Adapter | Has `requireConsent` / `setConsentGiven` commands |
+| **Google Analytics 4** | Adapter | Google Consent Mode v2 (`gtag('consent', 'update', ...)`) |
+| **Google Ads** | Adapter | Shares Google Consent Mode v2 with GA4 |
+| **Meta Pixel** | Adapter | Has `fbq('consent', 'grant')` / `fbq('consent', 'revoke')` |
+| **Mixpanel** | Adapter | Has `opt_in_tracking()` / `opt_out_tracking()` API |
+| **HubSpot** | Adapter | Has `_hsp.push(['setHubSpotConsent', ...])` queue |
+| **Plausible** | Adapter | Uses `localStorage.plausible_ignore` flag |
+| **TikTok Pixel** | Adapter | Has `ttq.grantConsent()` / `ttq.revokeConsent()` |
+| **Hotjar** | Script Blocking | No consent API — block the script until consent |
+| **Google Tag Manager** | Script Blocking | Load GTM only after consent, or use Consent Mode |
+| **Clarity (Microsoft)** | Script Blocking | No consent API — block the script until consent |
+| **Intercom** | Script Blocking | No granular consent API — block until consent |
+| **Crisp Chat** | Script Blocking | No consent API — block until consent |
+| **YouTube Embeds** | Script Blocking | Use `data-keksmeister` on the embed script |
+| **Google Maps** | Script Blocking | Block iframe/script until consent |
+| **Custom Scripts** | Script Blocking | Any `<script>` without its own consent API |
+
+**Rule of thumb:** If the tool has a JavaScript API to enable/disable tracking at runtime, use an **adapter**. If it only works by loading/not loading its script, use **script blocking** with `data-keksmeister`.
+
+Script blocking example for Hotjar:
+
+```html
+<script type="text/plain" data-keksmeister="analytics">
+  (function(h,o,t,j,a,r){
+    h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+    h._hjSettings={hjid:YOUR_ID,hjsv:6};
+    a=o.getElementsByTagName('head')[0];
+    r=o.createElement('script');r.async=1;
+    r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+    a.appendChild(r);
+  })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+</script>
+```
 
 #### Custom Adapters
 
@@ -240,9 +282,10 @@ src/
 │   ├── matomo.ts              # Matomo requireConsent/setCookieConsentGiven
 │   ├── google-analytics.ts    # GA4 Consent Mode v2 (analytics + ads)
 │   ├── meta-pixel.ts          # Meta Pixel consent grant/revoke
-│   ├── hotjar.ts              # Hotjar consent optIn/optOut
 │   ├── mixpanel.ts            # Mixpanel opt-in/opt-out tracking
-│   └── hubspot.ts             # HubSpot setHubSpotConsent
+│   ├── hubspot.ts             # HubSpot setHubSpotConsent
+│   ├── plausible.ts           # Plausible localStorage flag
+│   └── tiktok-pixel.ts        # TikTok Pixel grantConsent/revokeConsent
 │
 ├── ui/                        # Web Component layer
 │   ├── keksmeister-banner.ts  # <keksmeister-banner> Custom Element
@@ -262,7 +305,7 @@ src/
 - **No built-in server/database** — Unlike c15t, we believe consent proof logging belongs in your existing backend. A simple `onConsent` callback keeps the library focused.
 - **`data-keksmeister` attribute** — Simple, declarative script blocking inspired by Klaro's `data-name` approach.
 - **Two consent mechanisms** — Script blocking for `<script>` tags, service adapters for programmatic APIs (PostHog, GA4, etc.). Most real-world setups need both.
-- **Adapter pattern** — A simple `{ onConsent, onRevoke }` interface. Built-in adapters for 7 popular services, easy to extend with custom adapters.
+- **Adapter pattern** — A simple `{ onConsent, onRevoke }` interface. Built-in adapters for 9 popular services, easy to extend with custom adapters. Tools without a consent API (Hotjar, Clarity, etc.) should use script blocking instead.
 
 ## Browser Support
 

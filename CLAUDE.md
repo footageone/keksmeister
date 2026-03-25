@@ -19,7 +19,7 @@ The library has a strict core/ui split:
   - `ConsentManager` — State machine, cookie persistence, events
   - `ScriptBlocker` — Blocks/activates `<script data-keksmeister="...">` tags
   - `ServiceRegistry` + `ServiceAdapter` — Programmatic opt-in/opt-out for JS-based services
-- `src/adapters/` — Built-in service adapters (PostHog, Matomo, GA4, Meta Pixel, Hotjar, Mixpanel, HubSpot). Each adapter implements the `ServiceAdapter` interface.
+- `src/adapters/` — Built-in service adapters (PostHog, Matomo, GA4, Meta Pixel, Mixpanel, HubSpot, Plausible, TikTok Pixel). Each adapter implements the `ServiceAdapter` interface.
 - `src/ui/` — Web Component (`<keksmeister-banner>`) using native Custom Elements + Shadow DOM.
 - `src/i18n/` — Translation files. German is the default fallback.
 

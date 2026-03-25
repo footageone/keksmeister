@@ -3,7 +3,12 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
 /**
  * Plausible Analytics adapter.
  *
- * @see https://plausible.io/docs/excluding#exclude-yourself-from-the-analytics
+ * @see https://plausible.io/docs/excluding-localstorage
+ *
+ * Documented opt-out mechanism (from Plausible docs):
+ * - Key: `localStorage.plausible_ignore`
+ * - Value: `'true'` to exclude, remove to include
+ * - Console message when active: "Ignoring Event: localStorage flag"
  *
  * Plausible is privacy-focused and doesn't use cookies, so consent is
  * technically not required. However, some site owners want to respect

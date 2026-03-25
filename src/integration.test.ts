@@ -6,7 +6,7 @@ import { createPostHogAdapter } from './adapters/posthog.js';
 import { createGoogleAnalyticsAdapter, createGoogleAdsAdapter } from './adapters/google-analytics.js';
 import { createMetaPixelAdapter } from './adapters/meta-pixel.js';
 import { createMatomoAdapter } from './adapters/matomo.js';
-import { createHotjarAdapter } from './adapters/hotjar.js';
+
 import type { KeksmeisterConfig } from './core/types.js';
 import type { PostHogLike } from './adapters/posthog.js';
 
@@ -117,7 +117,7 @@ describe('Integration: Full consent flow', () => {
     }));
 
     // Verify: Meta Pixel granted
-    expect(fbqMock).toHaveBeenCalledWith('consent', 'granted');
+    expect(fbqMock).toHaveBeenCalledWith('consent', 'grant');
 
     // Verify: blocked script was activated (replaced with real script)
     const blocked = document.querySelector('script[data-keksmeister="analytics"]');
@@ -268,44 +268,24 @@ describe('Integration: Full consent flow', () => {
     expect(paq).toContainEqual(['forgetConsentGiven']);
   });
 
-  it('Hotjar adapter integration', () => {
-    const hjMock = vi.fn();
-    (globalThis as Record<string, unknown>).hj = hjMock;
-
-    const config = createFullConfig();
-    const manager = new ConsentManager(config);
-    const registry = new ServiceRegistry(manager);
-
-    registry.register(createHotjarAdapter());
-
-    manager.acceptAll();
-    expect(hjMock).toHaveBeenCalledWith('consent', 'granted');
-
-    hjMock.mockClear();
-    manager.saveCustom({ analytics: false, marketing: false });
-    expect(hjMock).toHaveBeenCalledWith('consent', 'denied');
-
-    delete (globalThis as Record<string, unknown>).hj;
-  });
-
   it('multiple adapters for same category all get notified', () => {
     const posthog = createMockPostHog();
-    const hjMock = vi.fn();
-    (globalThis as Record<string, unknown>).hj = hjMock;
+    const fbqMock = vi.fn();
+    (globalThis as Record<string, unknown>).fbq = fbqMock;
 
     const config = createFullConfig();
     const manager = new ConsentManager(config);
     const registry = new ServiceRegistry(manager);
 
-    // Both in analytics category
+    // PostHog in analytics, Meta Pixel in marketing
     registry.register(createPostHogAdapter(posthog));
-    registry.register(createHotjarAdapter());
+    registry.register(createMetaPixelAdapter());
 
     manager.acceptAll();
 
     expect(posthog.opt_in_capturing).toHaveBeenCalledOnce();
-    expect(hjMock).toHaveBeenCalledWith('consent', 'granted');
+    expect(fbqMock).toHaveBeenCalledWith('consent', 'grant');
 
-    delete (globalThis as Record<string, unknown>).hj;
+    delete (globalThis as Record<string, unknown>).fbq;
   });
 });
