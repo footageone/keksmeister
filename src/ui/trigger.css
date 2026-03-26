@@ -1,0 +1,80 @@
+/*
+ * Unified trigger styles.
+ *
+ * All variant differences are controlled by internal --_km-* variables
+ * set by the component's render() method. Public theming uses --km-trigger-*.
+ */
+
+:host {
+  /* Public API (customizable from outside) */
+  --km-trigger-size: 40px;
+  --km-trigger-bg: var(--km-primary, #1a1a1a);
+  --km-trigger-color: var(--km-primary-text, #ffffff);
+  --km-trigger-offset: 16px;
+
+  /* Internal layout (set by JS per variant) */
+  display: var(--_km-display, inline);
+  position: var(--_km-position, static);
+  left: var(--_km-left, auto);
+  right: var(--_km-right, auto);
+  bottom: var(--_km-bottom, auto);
+  z-index: var(--_km-z, auto);
+}
+
+:host([hidden]) {
+  display: none !important;
+}
+
+button {
+  /* Internal button (set by JS per variant) */
+  display: var(--_km-btn-display, inline);
+  width: var(--_km-btn-size, auto);
+  height: var(--_km-btn-size, auto);
+  background: var(--_km-btn-bg, none);
+  color: var(--_km-btn-color, inherit);
+  border-radius: var(--_km-btn-radius, 0);
+  padding: var(--_km-btn-padding, 0);
+  box-shadow: var(--_km-btn-shadow, none);
+  font-size: var(--_km-btn-font-size, inherit);
+  line-height: var(--_km-btn-line-height, inherit);
+  transition: var(--_km-btn-transition, none);
+
+  /* Shared across all variants */
+  border: none;
+  margin: 0;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: inherit;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+}
+
+button:hover {
+  transform: var(--_km-hover-transform, none);
+  box-shadow: var(--_km-hover-shadow, var(--_km-btn-shadow, none));
+  opacity: var(--_km-hover-opacity, 1);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--_km-focus-color, currentColor);
+  outline-offset: 2px;
+}
+
+.km-trigger__icon {
+  font-size: 1.15em;
+  line-height: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+@media print {
+  :host {
+    display: none !important;
+  }
+}

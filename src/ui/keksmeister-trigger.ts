@@ -1,5 +1,6 @@
 import { resolveTranslations } from '../i18n/index.js';
-import { detectLanguage, triggerMediaCSS } from './shared.js';
+import { detectLanguage } from './shared.js';
+import triggerStyles from './trigger.css?inline';
 
 /**
  * <keksmeister-trigger> — Button to re-open cookie settings.
@@ -16,6 +17,12 @@ import { detectLanguage, triggerMediaCSS } from './shared.js';
  *   - banner-selector: CSS selector for the banner element (default: "keksmeister-banner")
  *   - label: Button label — overrides i18n default.
  *   - lang: Language code for i18n (default: auto-detect from document/navigator)
+ *
+ * Theming (CSS Custom Properties):
+ *   --km-trigger-size: 40px (icon variant)
+ *   --km-trigger-bg: var(--km-primary, #1a1a1a)
+ *   --km-trigger-color: var(--km-primary-text, #ffffff)
+ *   --km-trigger-offset: 16px (icon variant)
  */
 export class KeksmeisterTrigger extends HTMLElement {
   static readonly tagName = 'keksmeister-trigger';
@@ -52,20 +59,86 @@ export class KeksmeisterTrigger extends HTMLElement {
     return 'icon';
   }
 
+  /** Internal variable names used by trigger.css. */
+  private static readonly _vars = [
+    '--_km-display', '--_km-position', '--_km-left', '--_km-right',
+    '--_km-bottom', '--_km-z', '--_km-btn-display', '--_km-btn-size',
+    '--_km-btn-bg', '--_km-btn-color', '--_km-btn-radius', '--_km-btn-padding',
+    '--_km-btn-shadow', '--_km-btn-font-size', '--_km-btn-line-height',
+    '--_km-btn-transition', '--_km-hover-transform', '--_km-hover-shadow',
+    '--_km-hover-opacity', '--_km-focus-color',
+  ] as const;
+
+  /** Variant presets: maps internal variable names to values. */
+  private static readonly _presets: Record<string, Record<string, string>> = {
+    icon: {
+      '--_km-display': 'block',
+      '--_km-position': 'fixed',
+      '--_km-bottom': 'var(--km-trigger-offset)',
+      '--_km-z': '9999',
+      '--_km-btn-display': 'flex',
+      '--_km-btn-size': 'var(--km-trigger-size)',
+      '--_km-btn-bg': 'var(--km-trigger-bg)',
+      '--_km-btn-color': 'var(--km-trigger-color)',
+      '--_km-btn-radius': '50%',
+      '--_km-btn-shadow': '0 2px 8px rgba(0,0,0,0.2)',
+      '--_km-btn-font-size': '20px',
+      '--_km-btn-line-height': '1',
+      '--_km-btn-transition': 'transform 0.2s ease, box-shadow 0.2s ease',
+      '--_km-hover-transform': 'scale(1.1)',
+      '--_km-hover-shadow': '0 4px 12px rgba(0,0,0,0.3)',
+      '--_km-focus-color': 'var(--km-trigger-color)',
+    },
+    text: {
+      '--_km-display': 'inline-block',
+      '--_km-btn-display': 'inline-flex',
+      '--_km-btn-bg': 'var(--km-trigger-bg)',
+      '--_km-btn-color': 'var(--km-trigger-color)',
+      '--_km-btn-radius': '6px',
+      '--_km-btn-padding': '0.5em 1em',
+      '--_km-btn-font-size': '0.875em',
+      '--_km-btn-line-height': '1.4',
+      '--_km-btn-transition': 'opacity 0.2s ease',
+      '--_km-hover-opacity': '0.85',
+      '--_km-focus-color': 'var(--km-trigger-color)',
+    },
+    // slot: empty — CSS fallback defaults apply (inline, transparent, inherit)
+    slot: {},
+  };
+
+  /**
+   * Set internal --_km-* CSS variables on the host element
+   * to control variant-specific styling from a single CSS file.
+   */
+  private applyVariantStyles(variant: 'icon' | 'text' | 'slot'): void {
+    const preset = KeksmeisterTrigger._presets[variant];
+
+    // Reset all, then apply preset
+    for (const v of KeksmeisterTrigger._vars) {
+      if (preset[v]) {
+        this.style.setProperty(v, preset[v]);
+      } else {
+        this.style.removeProperty(v);
+      }
+    }
+
+    // Icon variant: dynamic position side
+    if (variant === 'icon') {
+      const side = this.getAttribute('position') === 'bottom-right' ? '--_km-right' : '--_km-left';
+      this.style.setProperty(side, 'var(--km-trigger-offset)');
+    }
+  }
+
   private render(): void {
     if (!this.shadowRoot) return;
 
     const variant = this.resolveVariant();
     const label = this.resolveLabel();
 
+    this.applyVariantStyles(variant);
+
     const style = document.createElement('style');
-    if (variant === 'icon') {
-      style.textContent = this.iconStyles();
-    } else if (variant === 'text') {
-      style.textContent = this.textStyles();
-    } else {
-      style.textContent = this.slotStyles();
-    }
+    style.textContent = triggerStyles;
 
     const button = document.createElement('button');
     button.setAttribute('type', 'button');
@@ -89,106 +162,6 @@ export class KeksmeisterTrigger extends HTMLElement {
     }
 
     this.shadowRoot.replaceChildren(style, button);
-  }
-
-  private iconStyles(): string {
-    const position = this.getAttribute('position') ?? 'bottom-left';
-    return /* css */ `
-      :host {
-        --km-trigger-size: 40px;
-        --km-trigger-bg: var(--km-primary, #1a1a1a);
-        --km-trigger-color: var(--km-primary-text, #ffffff);
-        --km-trigger-offset: 16px;
-        display: block;
-        position: fixed;
-        ${position === 'bottom-right' ? 'right' : 'left'}: var(--km-trigger-offset);
-        bottom: var(--km-trigger-offset);
-        z-index: 9999;
-      }
-      button {
-        width: var(--km-trigger-size);
-        height: var(--km-trigger-size);
-        border-radius: 50%;
-        border: none;
-        background: var(--km-trigger-bg);
-        color: var(--km-trigger-color);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        padding: 0;
-        font-size: 20px;
-        line-height: 1;
-      }
-      button:hover {
-        transform: scale(1.1);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      }
-      button:focus-visible {
-        outline: 2px solid var(--km-trigger-color);
-        outline-offset: 2px;
-      }
-      ${triggerMediaCSS}
-    `;
-  }
-
-  private textStyles(): string {
-    return /* css */ `
-      :host {
-        --km-trigger-bg: var(--km-primary, #1a1a1a);
-        --km-trigger-color: var(--km-primary-text, #ffffff);
-        display: inline-block;
-      }
-      button {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4em;
-        border: none;
-        background: var(--km-trigger-bg);
-        color: var(--km-trigger-color);
-        cursor: pointer;
-        padding: 0.5em 1em;
-        border-radius: 6px;
-        font: inherit;
-        font-size: 0.875em;
-        line-height: 1.4;
-        transition: opacity 0.2s ease;
-      }
-      button:hover { opacity: 0.85; }
-      button:focus-visible {
-        outline: 2px solid var(--km-trigger-color);
-        outline-offset: 2px;
-      }
-      .km-trigger__icon { font-size: 1.15em; line-height: 1; }
-      ${triggerMediaCSS}
-    `;
-  }
-
-  private slotStyles(): string {
-    return /* css */ `
-      :host { display: inline; }
-      button {
-        display: inline;
-        background: none;
-        border: none;
-        padding: 0;
-        margin: 0;
-        font: inherit;
-        color: inherit;
-        cursor: pointer;
-        text-align: inherit;
-        text-decoration: inherit;
-        line-height: inherit;
-      }
-      button:focus-visible {
-        outline: 2px solid currentColor;
-        outline-offset: 2px;
-        border-radius: 2px;
-      }
-      ${triggerMediaCSS}
-    `;
   }
 
   private openBanner(): void {
