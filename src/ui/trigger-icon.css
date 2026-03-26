@@ -1,0 +1,30 @@
+/* Icon variant: fixed-position floating circle. */
+
+:host {
+  display: block;
+  position: fixed;
+  bottom: var(--km-trigger-offset);
+  z-index: 9999;
+}
+
+:host(.km-right) { right: var(--km-trigger-offset); }
+:host(:not(.km-right)) { left: var(--km-trigger-offset); }
+
+button {
+  display: flex;
+  width: var(--km-trigger-size);
+  height: var(--km-trigger-size);
+  border-radius: 50%;
+  background: var(--km-trigger-bg);
+  color: var(--km-trigger-color);
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}

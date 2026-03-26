@@ -1,6 +1,9 @@
 import { resolveTranslations } from '../i18n/index.js';
 import { detectLanguage } from './shared.js';
-import triggerStyles from './trigger.css?inline';
+import baseStyles from './trigger.css?inline';
+import iconStyles from './trigger-icon.css?inline';
+import textStyles from './trigger-text.css?inline';
+import slotStyles from './trigger-slot.css?inline';
 
 /**
  * <keksmeister-trigger> — Button to re-open cookie settings.
@@ -28,6 +31,12 @@ export class KeksmeisterTrigger extends HTMLElement {
   static readonly tagName = 'keksmeister-trigger';
   static readonly observedAttributes = ['variant', 'position', 'label', 'lang', 'banner-selector'];
 
+  private static readonly _variantCSS: Record<string, string> = {
+    icon: iconStyles,
+    text: textStyles,
+    slot: slotStyles,
+  };
+
   private _hasSlottedContent = false;
 
   constructor() {
@@ -54,79 +63,7 @@ export class KeksmeisterTrigger extends HTMLElement {
 
   private resolveVariant(): 'icon' | 'text' | 'slot' {
     if (this._hasSlottedContent) return 'slot';
-    const attr = this.getAttribute('variant');
-    if (attr === 'text') return 'text';
-    return 'icon';
-  }
-
-  /** Internal variable names used by trigger.css. */
-  private static readonly _vars = [
-    '--_km-display', '--_km-position', '--_km-left', '--_km-right',
-    '--_km-bottom', '--_km-z', '--_km-btn-display', '--_km-btn-size',
-    '--_km-btn-bg', '--_km-btn-color', '--_km-btn-radius', '--_km-btn-padding',
-    '--_km-btn-shadow', '--_km-btn-font-size', '--_km-btn-line-height',
-    '--_km-btn-transition', '--_km-hover-transform', '--_km-hover-shadow',
-    '--_km-hover-opacity', '--_km-focus-color',
-  ] as const;
-
-  /** Variant presets: maps internal variable names to values. */
-  private static readonly _presets: Record<string, Record<string, string>> = {
-    icon: {
-      '--_km-display': 'block',
-      '--_km-position': 'fixed',
-      '--_km-bottom': 'var(--km-trigger-offset)',
-      '--_km-z': '9999',
-      '--_km-btn-display': 'flex',
-      '--_km-btn-size': 'var(--km-trigger-size)',
-      '--_km-btn-bg': 'var(--km-trigger-bg)',
-      '--_km-btn-color': 'var(--km-trigger-color)',
-      '--_km-btn-radius': '50%',
-      '--_km-btn-shadow': '0 2px 8px rgba(0,0,0,0.2)',
-      '--_km-btn-font-size': '20px',
-      '--_km-btn-line-height': '1',
-      '--_km-btn-transition': 'transform 0.2s ease, box-shadow 0.2s ease',
-      '--_km-hover-transform': 'scale(1.1)',
-      '--_km-hover-shadow': '0 4px 12px rgba(0,0,0,0.3)',
-      '--_km-focus-color': 'var(--km-trigger-color)',
-    },
-    text: {
-      '--_km-display': 'inline-block',
-      '--_km-btn-display': 'inline-flex',
-      '--_km-btn-bg': 'var(--km-trigger-bg)',
-      '--_km-btn-color': 'var(--km-trigger-color)',
-      '--_km-btn-radius': '6px',
-      '--_km-btn-padding': '0.5em 1em',
-      '--_km-btn-font-size': '0.875em',
-      '--_km-btn-line-height': '1.4',
-      '--_km-btn-transition': 'opacity 0.2s ease',
-      '--_km-hover-opacity': '0.85',
-      '--_km-focus-color': 'var(--km-trigger-color)',
-    },
-    // slot: empty — CSS fallback defaults apply (inline, transparent, inherit)
-    slot: {},
-  };
-
-  /**
-   * Set internal --_km-* CSS variables on the host element
-   * to control variant-specific styling from a single CSS file.
-   */
-  private applyVariantStyles(variant: 'icon' | 'text' | 'slot'): void {
-    const preset = KeksmeisterTrigger._presets[variant];
-
-    // Reset all, then apply preset
-    for (const v of KeksmeisterTrigger._vars) {
-      if (preset[v]) {
-        this.style.setProperty(v, preset[v]);
-      } else {
-        this.style.removeProperty(v);
-      }
-    }
-
-    // Icon variant: dynamic position side
-    if (variant === 'icon') {
-      const side = this.getAttribute('position') === 'bottom-right' ? '--_km-right' : '--_km-left';
-      this.style.setProperty(side, 'var(--km-trigger-offset)');
-    }
+    return this.getAttribute('variant') === 'text' ? 'text' : 'icon';
   }
 
   private render(): void {
@@ -135,10 +72,11 @@ export class KeksmeisterTrigger extends HTMLElement {
     const variant = this.resolveVariant();
     const label = this.resolveLabel();
 
-    this.applyVariantStyles(variant);
+    // Icon position via CSS class on the host
+    this.classList.toggle('km-right', variant === 'icon' && this.getAttribute('position') === 'bottom-right');
 
     const style = document.createElement('style');
-    style.textContent = triggerStyles;
+    style.textContent = baseStyles + KeksmeisterTrigger._variantCSS[variant];
 
     const button = document.createElement('button');
     button.setAttribute('type', 'button');

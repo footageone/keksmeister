@@ -1,0 +1,20 @@
+/* Slot variant: transparent wrapper, consumer controls appearance. */
+
+:host {
+  display: inline;
+}
+
+button {
+  display: inline;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  line-height: inherit;
+  text-decoration: inherit;
+}
+
+button:focus-visible {
+  outline-color: currentColor;
+  border-radius: 2px;
+}
