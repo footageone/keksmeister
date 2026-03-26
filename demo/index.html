@@ -93,16 +93,24 @@
   ></keksmeister-banner>
 
   <h2>Trigger-Varianten</h2>
-  <p>Der <code>&lt;keksmeister-trigger&gt;</code> kann als Icon oder als Text-Button dargestellt werden:</p>
+  <p>Der <code>&lt;keksmeister-trigger&gt;</code> kann als Icon, Text-Button oder mit eigenem Inhalt dargestellt werden:</p>
 
   <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 16px;">
     <div>
-      <p style="margin-bottom:4px; font-size:13px; color:#888;">variant="text" (default label via i18n):</p>
+      <p style="margin-bottom:4px; font-size:13px; color:#888;">variant="text" (i18n label):</p>
       <keksmeister-trigger variant="text"></keksmeister-trigger>
     </div>
     <div>
-      <p style="margin-bottom:4px; font-size:13px; color:#888;">variant="text" label="Cookies verwalten":</p>
+      <p style="margin-bottom:4px; font-size:13px; color:#888;">variant="text" label="...":</p>
       <keksmeister-trigger variant="text" label="Cookies verwalten"></keksmeister-trigger>
+    </div>
+    <div>
+      <p style="margin-bottom:4px; font-size:13px; color:#888;">Slotted content (Link):</p>
+      <keksmeister-trigger><a href="#" style="color:#2563eb;">Cookie-Einstellungen anpassen</a></keksmeister-trigger>
+    </div>
+    <div>
+      <p style="margin-bottom:4px; font-size:13px; color:#888;">Slotted content (custom):</p>
+      <keksmeister-trigger><span style="background:#e5e7eb; padding:4px 12px; border-radius:4px; font-size:14px;">&#x2699;&#xFE0F; Cookies</span></keksmeister-trigger>
     </div>
   </div>
 
@@ -113,7 +121,12 @@
 &lt;keksmeister-trigger variant="text"&gt;&lt;/keksmeister-trigger&gt;
 
 &lt;!-- Custom label --&gt;
-&lt;keksmeister-trigger variant="text" label="Cookies verwalten"&gt;&lt;/keksmeister-trigger&gt;</pre>
+&lt;keksmeister-trigger variant="text" label="Cookies verwalten"&gt;&lt;/keksmeister-trigger&gt;
+
+&lt;!-- Fully custom content via slot --&gt;
+&lt;keksmeister-trigger&gt;
+  &lt;a href="#"&gt;Cookie-Einstellungen anpassen&lt;/a&gt;
+&lt;/keksmeister-trigger&gt;</pre>
 
   <!-- Floating cookie button to re-open settings -->
   <keksmeister-trigger position="bottom-left"></keksmeister-trigger>

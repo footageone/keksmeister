@@ -121,18 +121,43 @@ The registry listens for consent/revoke events automatically. No manual wiring n
 
 ## Trigger variants
 
+### Icon (default)
+
+Fixed-position floating button in a corner of the page:
+
 ```html
-<!-- Floating icon (default) — fixed position in corner -->
 <keksmeister-trigger></keksmeister-trigger>
+<keksmeister-trigger position="bottom-right"></keksmeister-trigger>
+```
 
-<!-- Text button — inline, for footers or privacy pages -->
+### Text
+
+Inline button with localized label, ideal for footers or privacy pages:
+
+```html
 <keksmeister-trigger variant="text"></keksmeister-trigger>
-
-<!-- Custom label -->
 <keksmeister-trigger variant="text" label="Cookies verwalten"></keksmeister-trigger>
 ```
 
 The label is auto-localized based on the page language.
+
+### Slotted content (fully custom)
+
+When you place content inside the element, it renders a minimal, unstyled button wrapper around your content via `<slot>`. You have full control over the appearance:
+
+```html
+<!-- Link-style trigger -->
+<keksmeister-trigger>
+  <a href="#">Cookie-Einstellungen anpassen</a>
+</keksmeister-trigger>
+
+<!-- Custom styled trigger -->
+<keksmeister-trigger>
+  <span class="my-cookie-btn">⚙️ Cookies</span>
+</keksmeister-trigger>
+```
+
+The wrapper button is fully transparent (no background, no border, no padding). It only provides the click handler and an `aria-label` for accessibility. Your slotted content controls the entire visual appearance.
 
 ## Theming
 
