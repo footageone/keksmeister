@@ -4,6 +4,8 @@ The simplest way to use Keksmeister — no framework, no build step needed.
 
 ## Via CDN (no build step)
 
+Use [jsDelivr](https://www.jsdelivr.com/package/npm/keksmeister) or unpkg to load Keksmeister directly — no npm, no bundler.
+
 ```html
 <!DOCTYPE html>
 <html lang="de">
@@ -11,10 +13,11 @@ The simplest way to use Keksmeister — no framework, no build step needed.
   <meta charset="UTF-8" />
   <title>My Website</title>
 
-  <!-- Load Keksmeister -->
-  <script type="module">
-    import 'https://unpkg.com/keksmeister';
-  </script>
+  <!-- jsDelivr (recommended) -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/keksmeister/dist/keksmeister.min.js"></script>
+
+  <!-- or unpkg -->
+  <!-- <script type="module" src="https://unpkg.com/keksmeister/dist/keksmeister.min.js"></script> -->
 </head>
 <body>
 
@@ -151,9 +154,22 @@ For CMS-based sites, add the elements to your theme's footer template:
 
 <keksmeister-trigger position="bottom-left"></keksmeister-trigger>
 
-<script type="module">
-  import 'https://unpkg.com/keksmeister';
-</script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/keksmeister/dist/keksmeister.min.js"></script>
 ```
 
 No build step needed. The banner appears on every page and persists consent via cookies.
+
+## CDN options
+
+| CDN | URL |
+|-----|-----|
+| **jsDelivr** (recommended) | `https://cdn.jsdelivr.net/npm/keksmeister/dist/keksmeister.min.js` |
+| **unpkg** | `https://unpkg.com/keksmeister/dist/keksmeister.min.js` |
+
+Pin a specific version for production:
+
+```
+https://cdn.jsdelivr.net/npm/keksmeister@0.3.0/dist/keksmeister.min.js
+```
+
+Browse all files: [keksmeister on jsDelivr](https://www.jsdelivr.com/package/npm/keksmeister)

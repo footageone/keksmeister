@@ -6,6 +6,8 @@
   "main": "./dist/keksmeister.umd.cjs",
   "module": "./dist/keksmeister.js",
   "types": "./dist/index.d.ts",
+  "jsdelivr": "./dist/keksmeister.min.js",
+  "unpkg": "./dist/keksmeister.min.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -48,7 +50,7 @@
   ],
   "scripts": {
     "dev": "vite serve demo",
-    "build": "vite build && tsc -p tsconfig.build.json",
+    "build": "vite build && tsc -p tsconfig.build.json && terser dist/keksmeister.js --compress --mangle --source-map \"content=dist/keksmeister.js.map,url=keksmeister.min.js.map\" -o dist/keksmeister.min.js",
     "preview": "vite preview",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
@@ -90,6 +92,7 @@
     "happy-dom": "^20.8.7",
     "husky": "^9.1.7",
     "marked": "^17.0.5",
+    "terser": "^5.46.1",
     "typescript": "^6.0.2",
     "vite": "^8.0.2",
     "vitest": "^4.1.1"

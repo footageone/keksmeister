@@ -76,14 +76,29 @@ import 'keksmeister';
 
 ### CDN / Script Tag
 
+No build step needed. Pick your preferred CDN:
+
 ```html
-<script type="module" src="https://unpkg.com/keksmeister"></script>
+<!-- jsDelivr (recommended) -->
+<script type="module" src="https://cdn.jsdelivr.net/npm/keksmeister/dist/keksmeister.min.js"></script>
+
+<!-- or unpkg -->
+<script type="module" src="https://unpkg.com/keksmeister/dist/keksmeister.min.js"></script>
 
 <keksmeister-banner
   privacy-url="/datenschutz"
   lang="de"
 ></keksmeister-banner>
+<keksmeister-trigger position="bottom-left"></keksmeister-trigger>
 ```
+
+Pin a specific version for production:
+
+```html
+<script type="module" src="https://cdn.jsdelivr.net/npm/keksmeister@0.3.0/dist/keksmeister.min.js"></script>
+```
+
+Browse all available files: [keksmeister on jsDelivr](https://www.jsdelivr.com/package/npm/keksmeister)
 
 ### JavaScript Configuration
 
