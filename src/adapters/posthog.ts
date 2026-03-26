@@ -1,4 +1,5 @@
 import type { ServiceAdapter } from '../core/service-adapter.js';
+import type { BaseAdapterOptions } from './shared.js';
 
 /**
  * PostHog analytics adapter.
@@ -41,12 +42,7 @@ export interface PostHogLike {
   has_opted_out_capturing: () => boolean;
 }
 
-export interface PostHogAdapterOptions {
-  /** Consent category (default: 'analytics') */
-  category?: string;
-  /** Service id (default: 'posthog') */
-  id?: string;
-}
+export interface PostHogAdapterOptions extends BaseAdapterOptions {}
 
 /**
  * Create a PostHog service adapter.

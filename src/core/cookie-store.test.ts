@@ -1,16 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { CookieStore } from './cookie-store.js';
 import type { ConsentRecord } from './types.js';
+import { clearCookies } from '../test-utils.js';
 
 describe('CookieStore', () => {
   beforeEach(() => {
-    // Clear all cookies
-    document.cookie.split(';').forEach((c) => {
-      const name = c.split('=')[0].trim();
-      if (name) {
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-      }
-    });
+    clearCookies();
   });
 
   it('returns null when no consent cookie exists', () => {

@@ -1,3 +1,5 @@
+export type { BaseAdapterOptions } from './shared.js';
+
 export { createPostHogAdapter } from './posthog.js';
 export type { PostHogLike, PostHogAdapterOptions } from './posthog.js';
 

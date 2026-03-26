@@ -1,4 +1,5 @@
 import type { ServiceAdapter } from '../core/service-adapter.js';
+import { getGlobalFn, type BaseAdapterOptions } from './shared.js';
 
 /**
  * Meta (Facebook) Pixel adapter.
@@ -25,21 +26,8 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
 
 type FbqFn = (...args: unknown[]) => void;
 
-function getFbq(): FbqFn | null {
-  const w = globalThis as Record<string, unknown>;
-  return typeof w.fbq === 'function' ? (w.fbq as FbqFn) : null;
-}
+export interface MetaPixelAdapterOptions extends BaseAdapterOptions {}
 
-export interface MetaPixelAdapterOptions {
-  /** Consent category (default: 'marketing') */
-  category?: string;
-  /** Service id (default: 'meta-pixel') */
-  id?: string;
-}
-
-/**
- * Create a Meta Pixel service adapter.
- */
 export function createMetaPixelAdapter(
   options: MetaPixelAdapterOptions = {}
 ): ServiceAdapter {
@@ -47,10 +35,10 @@ export function createMetaPixelAdapter(
     id: options.id ?? 'meta-pixel',
     category: options.category ?? 'marketing',
     onConsent: () => {
-      getFbq()?.('consent', 'grant');
+      getGlobalFn<FbqFn>('fbq')?.('consent', 'grant');
     },
     onRevoke: () => {
-      getFbq()?.('consent', 'revoke');
+      getGlobalFn<FbqFn>('fbq')?.('consent', 'revoke');
     },
   };
 }

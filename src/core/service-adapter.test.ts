@@ -2,28 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ConsentManager } from './consent-manager.js';
 import { ServiceRegistry } from './service-adapter.js';
 import type { ServiceAdapter } from './service-adapter.js';
-import type { KeksmeisterConfig } from './types.js';
-
-function createConfig(overrides: Partial<KeksmeisterConfig> = {}): KeksmeisterConfig {
-  return {
-    categories: [
-      { id: 'essential', label: 'Essential', required: true },
-      { id: 'analytics', label: 'Analytics' },
-      { id: 'marketing', label: 'Marketing' },
-    ],
-    privacyUrl: '/privacy',
-    ...overrides,
-  };
-}
-
-function clearCookies(): void {
-  document.cookie.split(';').forEach((c) => {
-    const name = c.split('=')[0].trim();
-    if (name) {
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-    }
-  });
-}
+import { clearCookies, createConfig } from '../test-utils.js';
 
 function createMockAdapter(id: string, category: string) {
   return {

@@ -1,4 +1,5 @@
 import type { ServiceAdapter } from '../core/service-adapter.js';
+import type { BaseAdapterOptions } from './shared.js';
 
 /**
  * Mixpanel adapter.
@@ -31,12 +32,7 @@ export interface MixpanelLike {
   has_opted_out_tracking: () => boolean;
 }
 
-export interface MixpanelAdapterOptions {
-  /** Consent category (default: 'analytics') */
-  category?: string;
-  /** Service id (default: 'mixpanel') */
-  id?: string;
-}
+export interface MixpanelAdapterOptions extends BaseAdapterOptions {}
 
 /**
  * Create a Mixpanel service adapter.

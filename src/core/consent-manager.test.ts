@@ -1,27 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ConsentManager } from './consent-manager.js';
-import type { KeksmeisterConfig, ConsentRecord } from './types.js';
-
-function createConfig(overrides: Partial<KeksmeisterConfig> = {}): KeksmeisterConfig {
-  return {
-    categories: [
-      { id: 'essential', label: 'Essential', required: true },
-      { id: 'analytics', label: 'Analytics' },
-      { id: 'marketing', label: 'Marketing' },
-    ],
-    privacyUrl: '/privacy',
-    ...overrides,
-  };
-}
-
-function clearCookies(): void {
-  document.cookie.split(';').forEach((c) => {
-    const name = c.split('=')[0].trim();
-    if (name) {
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-    }
-  });
-}
+import type { ConsentRecord } from './types.js';
+import { clearCookies, createConfig } from '../test-utils.js';
 
 describe('ConsentManager', () => {
   beforeEach(() => {

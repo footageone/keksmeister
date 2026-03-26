@@ -9,15 +9,7 @@ import { createMatomoAdapter } from './adapters/matomo.js';
 
 import type { KeksmeisterConfig } from './core/types.js';
 import type { PostHogLike } from './adapters/posthog.js';
-
-function clearCookies(): void {
-  document.cookie.split(';').forEach((c) => {
-    const name = c.split('=')[0].trim();
-    if (name) {
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-    }
-  });
-}
+import { clearCookies } from './test-utils.js';
 
 function createFullConfig(overrides: Partial<KeksmeisterConfig> = {}): KeksmeisterConfig {
   return {

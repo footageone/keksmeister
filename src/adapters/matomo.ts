@@ -1,4 +1,5 @@
 import type { ServiceAdapter } from '../core/service-adapter.js';
+import type { BaseAdapterOptions } from './shared.js';
 
 /**
  * Matomo/Piwik analytics adapter.
@@ -30,11 +31,7 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
 /** The Matomo _paq command queue. */
 export type MatomoPaq = Array<unknown[]>;
 
-export interface MatomoAdapterOptions {
-  /** Consent category (default: 'analytics') */
-  category?: string;
-  /** Service id (default: 'matomo') */
-  id?: string;
+export interface MatomoAdapterOptions extends BaseAdapterOptions {
   /**
    * Consent mode:
    * - 'tracking' — blocks all requests until consent (requireConsent)

@@ -1,4 +1,5 @@
 import type { ServiceAdapter } from '../core/service-adapter.js';
+import { getGlobalFn, type BaseAdapterOptions } from './shared.js';
 
 /**
  * Google Analytics 4 / Google Consent Mode v2 adapter.
@@ -41,21 +42,9 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
 
 type GtagFn = (...args: unknown[]) => void;
 
-function getGtag(): GtagFn | null {
-  const w = globalThis as Record<string, unknown>;
-  return typeof w.gtag === 'function' ? (w.gtag as GtagFn) : null;
-}
+export interface GoogleAnalyticsAdapterOptions extends BaseAdapterOptions {}
+export interface GoogleAdsAdapterOptions extends BaseAdapterOptions {}
 
-export interface GoogleAnalyticsAdapterOptions {
-  /** Consent category (default: 'analytics') */
-  category?: string;
-  /** Service id (default: 'google-analytics') */
-  id?: string;
-}
-
-/**
- * Create a Google Analytics adapter (controls `analytics_storage`).
- */
 export function createGoogleAnalyticsAdapter(
   options: GoogleAnalyticsAdapterOptions = {}
 ): ServiceAdapter {
@@ -63,28 +52,18 @@ export function createGoogleAnalyticsAdapter(
     id: options.id ?? 'google-analytics',
     category: options.category ?? 'analytics',
     onConsent: () => {
-      getGtag()?.('consent', 'update', {
+      getGlobalFn<GtagFn>('gtag')?.('consent', 'update', {
         analytics_storage: 'granted',
       });
     },
     onRevoke: () => {
-      getGtag()?.('consent', 'update', {
+      getGlobalFn<GtagFn>('gtag')?.('consent', 'update', {
         analytics_storage: 'denied',
       });
     },
   };
 }
 
-export interface GoogleAdsAdapterOptions {
-  /** Consent category (default: 'marketing') */
-  category?: string;
-  /** Service id (default: 'google-ads') */
-  id?: string;
-}
-
-/**
- * Create a Google Ads adapter (controls `ad_storage`, `ad_user_data`, `ad_personalization`).
- */
 export function createGoogleAdsAdapter(
   options: GoogleAdsAdapterOptions = {}
 ): ServiceAdapter {
@@ -92,14 +71,14 @@ export function createGoogleAdsAdapter(
     id: options.id ?? 'google-ads',
     category: options.category ?? 'marketing',
     onConsent: () => {
-      getGtag()?.('consent', 'update', {
+      getGlobalFn<GtagFn>('gtag')?.('consent', 'update', {
         ad_storage: 'granted',
         ad_user_data: 'granted',
         ad_personalization: 'granted',
       });
     },
     onRevoke: () => {
-      getGtag()?.('consent', 'update', {
+      getGlobalFn<GtagFn>('gtag')?.('consent', 'update', {
         ad_storage: 'denied',
         ad_user_data: 'denied',
         ad_personalization: 'denied',
