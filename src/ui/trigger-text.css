@@ -1,0 +1,21 @@
+/* Text variant: inline button with label. */
+
+:host {
+  display: inline-block;
+}
+
+button {
+  display: inline-flex;
+  background: var(--km-trigger-bg);
+  color: var(--km-trigger-color);
+  padding: 0.5em 1em;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.875em;
+  line-height: 1.4;
+  transition: opacity 0.2s ease;
+}
+
+button:hover {
+  opacity: 0.85;
+}
