@@ -3,6 +3,7 @@ import { ScriptBlocker } from '../core/script-blocker.js';
 import type { ConsentChoices, KeksmeisterConfig, KeksmeisterTranslations } from '../core/types.js';
 import { resolveTranslations } from '../i18n/index.js';
 import { bannerStyles } from './styles.js';
+import { detectLanguage } from './shared.js';
 
 /**
  * <keksmeister-banner> — Cookie consent banner Web Component.
@@ -496,11 +497,7 @@ export class KeksmeisterBanner extends HTMLElement {
     const privacyUrl = this.getAttribute('privacy-url');
     if (!privacyUrl) return null;
 
-    // Auto-detect language from attribute, document lang, or navigator
-    const lang = this.getAttribute('lang')
-      ?? document.documentElement.lang?.split('-')[0]
-      ?? navigator.language?.split('-')[0]
-      ?? 'de';
+    const lang = detectLanguage(this);
 
     const categoriesAttr = this.getAttribute('categories');
 

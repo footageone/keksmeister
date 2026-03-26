@@ -1,4 +1,5 @@
 import type { ServiceAdapter } from '../core/service-adapter.js';
+import type { BaseAdapterOptions } from './shared.js';
 
 /**
  * HubSpot tracking adapter.
@@ -37,11 +38,7 @@ function getHsp(): HspFn {
   return w._hsp as HspFn;
 }
 
-export interface HubSpotAdapterOptions {
-  /** Consent category (default: 'marketing') */
-  category?: string;
-  /** Service id (default: 'hubspot') */
-  id?: string;
+export interface HubSpotAdapterOptions extends BaseAdapterOptions {
   /** Grant HubSpot analytics consent (default: true) */
   analyticsConsent?: boolean;
   /** Grant HubSpot advertisement consent (default: true) */

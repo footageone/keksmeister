@@ -1,4 +1,5 @@
 import type { ServiceAdapter } from '../core/service-adapter.js';
+import type { BaseAdapterOptions } from './shared.js';
 
 /**
  * Plausible Analytics adapter.
@@ -23,11 +24,7 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
  * ```
  */
 
-export interface PlausibleAdapterOptions {
-  /** Consent category (default: 'analytics') */
-  category?: string;
-  /** Service id (default: 'plausible') */
-  id?: string;
+export interface PlausibleAdapterOptions extends BaseAdapterOptions {
   /** localStorage key (default: 'plausible_ignore') */
   storageKey?: string;
 }

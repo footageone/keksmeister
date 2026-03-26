@@ -1,48 +1,21 @@
 import { resolveTranslations } from '../i18n/index.js';
+import { detectLanguage, triggerMediaCSS } from './shared.js';
 
 /**
  * <keksmeister-trigger> — Button to re-open cookie settings.
  *
  * Three variants:
  *   - `variant="icon"` (default): Small floating circle with a 🍪 emoji.
- *     Ideal for fixed-position placement in a corner of the page.
  *   - `variant="text"`: Inline button showing the label text with a 🍪 prefix.
- *     Ideal for embedding in a privacy page or footer.
  *   - **Slotted content**: When the element has child content, it renders a
  *     minimal button wrapper around a `<slot>`, giving you full control.
- *
- * Usage:
- *   <!-- Floating icon button (default) -->
- *   <keksmeister-trigger></keksmeister-trigger>
- *
- *   <!-- Text button for embedding in a footer or privacy page -->
- *   <keksmeister-trigger variant="text"></keksmeister-trigger>
- *
- *   <!-- Custom label overrides i18n default -->
- *   <keksmeister-trigger variant="text" label="Cookies verwalten"></keksmeister-trigger>
- *
- *   <!-- Fully custom content via slot -->
- *   <keksmeister-trigger>
- *     🔧 Cookies anpassen
- *   </keksmeister-trigger>
- *
- *   <!-- Custom icon + text via slot -->
- *   <keksmeister-trigger>
- *     <img src="cookie.svg" alt="" /> Einstellungen
- *   </keksmeister-trigger>
  *
  * Attributes:
  *   - variant: "icon" (default) | "text" — ignored when slotted content is present
  *   - position: "bottom-left" (default) | "bottom-right" (only for icon variant)
  *   - banner-selector: CSS selector for the banner element (default: "keksmeister-banner")
- *   - label: Button label — overrides i18n default. Used as aria-label (icon/slot) or visible text (text).
+ *   - label: Button label — overrides i18n default.
  *   - lang: Language code for i18n (default: auto-detect from document/navigator)
- *
- * Theming (CSS Custom Properties):
- *   --km-trigger-size: 40px (icon variant)
- *   --km-trigger-bg: var(--km-primary, #1a1a1a)
- *   --km-trigger-color: var(--km-primary-text, #ffffff)
- *   --km-trigger-offset: 16px (icon variant)
  */
 export class KeksmeisterTrigger extends HTMLElement {
   static readonly tagName = 'keksmeister-trigger';
@@ -68,13 +41,7 @@ export class KeksmeisterTrigger extends HTMLElement {
   private resolveLabel(): string {
     const explicit = this.getAttribute('label');
     if (explicit) return explicit;
-
-    const lang = this.getAttribute('lang')
-      ?? document.documentElement.lang?.split('-')[0]
-      ?? navigator.language?.split('-')[0]
-      ?? 'de';
-
-    const translations = resolveTranslations(lang);
+    const translations = resolveTranslations(detectLanguage(this));
     return translations.trigger?.label ?? 'Cookie-Einstellungen';
   }
 
@@ -132,14 +99,12 @@ export class KeksmeisterTrigger extends HTMLElement {
         --km-trigger-bg: var(--km-primary, #1a1a1a);
         --km-trigger-color: var(--km-primary-text, #ffffff);
         --km-trigger-offset: 16px;
-
         display: block;
         position: fixed;
         ${position === 'bottom-right' ? 'right' : 'left'}: var(--km-trigger-offset);
         bottom: var(--km-trigger-offset);
         z-index: 9999;
       }
-
       button {
         width: var(--km-trigger-size);
         height: var(--km-trigger-size);
@@ -157,24 +122,15 @@ export class KeksmeisterTrigger extends HTMLElement {
         font-size: 20px;
         line-height: 1;
       }
-
       button:hover {
         transform: scale(1.1);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       }
-
       button:focus-visible {
         outline: 2px solid var(--km-trigger-color);
         outline-offset: 2px;
       }
-
-      @media (prefers-reduced-motion: reduce) {
-        button { transition: none; }
-      }
-
-      @media print {
-        :host { display: none !important; }
-      }
+      ${triggerMediaCSS}
     `;
   }
 
@@ -183,10 +139,8 @@ export class KeksmeisterTrigger extends HTMLElement {
       :host {
         --km-trigger-bg: var(--km-primary, #1a1a1a);
         --km-trigger-color: var(--km-primary-text, #ffffff);
-
         display: inline-block;
       }
-
       button {
         display: inline-flex;
         align-items: center;
@@ -202,37 +156,19 @@ export class KeksmeisterTrigger extends HTMLElement {
         line-height: 1.4;
         transition: opacity 0.2s ease;
       }
-
-      button:hover {
-        opacity: 0.85;
-      }
-
+      button:hover { opacity: 0.85; }
       button:focus-visible {
         outline: 2px solid var(--km-trigger-color);
         outline-offset: 2px;
       }
-
-      .km-trigger__icon {
-        font-size: 1.15em;
-        line-height: 1;
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        button { transition: none; }
-      }
-
-      @media print {
-        :host { display: none !important; }
-      }
+      .km-trigger__icon { font-size: 1.15em; line-height: 1; }
+      ${triggerMediaCSS}
     `;
   }
 
   private slotStyles(): string {
     return /* css */ `
-      :host {
-        display: inline;
-      }
-
+      :host { display: inline; }
       button {
         display: inline;
         background: none;
@@ -246,16 +182,12 @@ export class KeksmeisterTrigger extends HTMLElement {
         text-decoration: inherit;
         line-height: inherit;
       }
-
       button:focus-visible {
         outline: 2px solid currentColor;
         outline-offset: 2px;
         border-radius: 2px;
       }
-
-      @media print {
-        :host { display: none !important; }
-      }
+      ${triggerMediaCSS}
     `;
   }
 

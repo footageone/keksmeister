@@ -1,4 +1,5 @@
 import type { ServiceAdapter } from '../core/service-adapter.js';
+import type { BaseAdapterOptions } from './shared.js';
 
 /**
  * TikTok Pixel adapter.
@@ -9,13 +10,6 @@ import type { ServiceAdapter } from '../core/service-adapter.js';
  * - `ttq.grantConsent()` — enable tracking
  * - `ttq.revokeConsent()` — disable tracking
  * - `ttq.holdConsent()` — pause consent status
- *
- * TikTok Pixel uses a consent API similar to Meta Pixel:
- *
- * ```js
- * ttq.grantConsent();  // enable tracking
- * ttq.revokeConsent(); // disable tracking
- * ```
  *
  * Initialize TikTok Pixel with consent revoked:
  *
@@ -43,16 +37,8 @@ function getTtq(): TtqFn | null {
   return null;
 }
 
-export interface TikTokPixelAdapterOptions {
-  /** Consent category (default: 'marketing') */
-  category?: string;
-  /** Service id (default: 'tiktok-pixel') */
-  id?: string;
-}
+export interface TikTokPixelAdapterOptions extends BaseAdapterOptions {}
 
-/**
- * Create a TikTok Pixel service adapter.
- */
 export function createTikTokPixelAdapter(
   options: TikTokPixelAdapterOptions = {}
 ): ServiceAdapter {

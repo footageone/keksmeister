@@ -1,26 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ConsentManager } from './consent-manager.js';
 import { ScriptBlocker } from './script-blocker.js';
-import type { KeksmeisterConfig } from './types.js';
-
-function createConfig(): KeksmeisterConfig {
-  return {
-    categories: [
-      { id: 'essential', label: 'Essential', required: true },
-      { id: 'analytics', label: 'Analytics' },
-    ],
-    privacyUrl: '/privacy',
-  };
-}
-
-function clearCookies(): void {
-  document.cookie.split(';').forEach((c) => {
-    const name = c.split('=')[0].trim();
-    if (name) {
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-    }
-  });
-}
+import { clearCookies, createConfig } from '../test-utils.js';
 
 describe('ScriptBlocker', () => {
   beforeEach(() => {
