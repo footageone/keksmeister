@@ -5,13 +5,3 @@ export function detectLanguage(el: HTMLElement): string {
     ?? navigator.language?.split('-')[0]
     ?? 'de';
 }
-
-/** Shared CSS media queries for trigger variants. */
-export const triggerMediaCSS = /* css */ `
-  @media (prefers-reduced-motion: reduce) {
-    button { transition: none; }
-  }
-  @media print {
-    :host { display: none !important; }
-  }
-`;
