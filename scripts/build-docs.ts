@@ -58,6 +58,13 @@ function buildNav(pages: DocPage[], currentSlug: string): string {
   }
   if (currentGroup) html += '  </div>\n';
 
+  html += '  <div class="docs-nav__group">\n';
+  html += '    <span class="docs-nav__group-label">Links</span>\n';
+  html += '    <a href="https://github.com/footageone/keksmeister">GitHub</a>\n';
+  html += '    <a href="https://www.npmjs.com/package/keksmeister">npm</a>\n';
+  html += '    <a href="https://www.jsdelivr.com/package/npm/keksmeister">jsDelivr</a>\n';
+  html += '  </div>\n';
+
   html += '</nav>';
   return html;
 }
