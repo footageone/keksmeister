@@ -29,10 +29,10 @@ Two consent mechanisms coexist:
 
 ## Git Workflow
 
-- **Never push directly to `main`.** All features and bugfixes must go through a pull request.
+- **Code changes require a pull request.** All features and bugfixes must go through a branch + PR.
 - Create a feature branch, commit there, push, and open a PR via `gh pr create`.
 - Branch naming: `feat/<topic>`, `fix/<topic>`, `docs/<topic>`, `chore/<topic>`
-- Direct pushes to `main` are only acceptable for version bumps before `gh release create`.
+- **Documentation-only changes** (docs/, README, CLAUDE.md) and **version bumps** may be pushed directly to `main`.
 
 ## Git Conventions
 
