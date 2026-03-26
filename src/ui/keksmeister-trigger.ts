@@ -34,6 +34,7 @@ import { resolveTranslations } from '../i18n/index.js';
  */
 export class KeksmeisterTrigger extends HTMLElement {
   static readonly tagName = 'keksmeister-trigger';
+  static readonly observedAttributes = ['variant', 'position', 'label', 'lang', 'banner-selector'];
 
   constructor() {
     super();
@@ -41,6 +42,11 @@ export class KeksmeisterTrigger extends HTMLElement {
   }
 
   connectedCallback(): void {
+    this.render();
+  }
+
+  attributeChangedCallback(): void {
+    if (!this.isConnected) return;
     this.render();
   }
 

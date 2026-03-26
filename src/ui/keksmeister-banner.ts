@@ -27,6 +27,7 @@ import { bannerStyles } from './styles.js';
  */
 export class KeksmeisterBanner extends HTMLElement {
   static readonly tagName = 'keksmeister-banner';
+  static readonly observedAttributes = ['privacy-url', 'lang', 'categories', 'revision', 'cookie-name'];
 
   private _manager: ConsentManager | null = null;
   private blocker: ScriptBlocker | null = null;
@@ -35,6 +36,7 @@ export class KeksmeisterBanner extends HTMLElement {
   private _view: 'banner' | 'modal' | 'hidden' = 'banner';
   private previouslyFocusedElement: HTMLElement | null = null;
   private _listenerAbort: AbortController | null = null;
+  private _configFromAttributes = false;
 
   /** Set the full config programmatically. */
   set config(value: KeksmeisterConfig) {
@@ -61,6 +63,7 @@ export class KeksmeisterBanner extends HTMLElement {
       const config = this.buildConfigFromAttributes();
       if (config) {
         this._config = config;
+        this._configFromAttributes = true;
         this.initialize();
       }
     }
@@ -69,6 +72,21 @@ export class KeksmeisterBanner extends HTMLElement {
   disconnectedCallback(): void {
     this.blocker?.stop();
     this._listenerAbort?.abort();
+  }
+
+  attributeChangedCallback(): void {
+    // Skip if config was set programmatically (attributes are only the fallback)
+    if (this._config && !this._configFromAttributes) return;
+    // Skip if not yet connected to the DOM
+    if (!this.isConnected) return;
+
+    const config = this.buildConfigFromAttributes();
+    if (config) {
+      this._config = config;
+      this._configFromAttributes = true;
+      this.blocker?.stop();
+      this.initialize();
+    }
   }
 
   /** Open the settings modal programmatically. */
