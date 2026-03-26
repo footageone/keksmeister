@@ -3,11 +3,13 @@ import { resolveTranslations } from '../i18n/index.js';
 /**
  * <keksmeister-trigger> — Button to re-open cookie settings.
  *
- * Two variants:
+ * Three variants:
  *   - `variant="icon"` (default): Small floating circle with a 🍪 emoji.
  *     Ideal for fixed-position placement in a corner of the page.
  *   - `variant="text"`: Inline button showing the label text with a 🍪 prefix.
  *     Ideal for embedding in a privacy page or footer.
+ *   - **Slotted content**: When the element has child content, it renders a
+ *     minimal button wrapper around a `<slot>`, giving you full control.
  *
  * Usage:
  *   <!-- Floating icon button (default) -->
@@ -19,11 +21,21 @@ import { resolveTranslations } from '../i18n/index.js';
  *   <!-- Custom label overrides i18n default -->
  *   <keksmeister-trigger variant="text" label="Cookies verwalten"></keksmeister-trigger>
  *
+ *   <!-- Fully custom content via slot -->
+ *   <keksmeister-trigger>
+ *     🔧 Cookies anpassen
+ *   </keksmeister-trigger>
+ *
+ *   <!-- Custom icon + text via slot -->
+ *   <keksmeister-trigger>
+ *     <img src="cookie.svg" alt="" /> Einstellungen
+ *   </keksmeister-trigger>
+ *
  * Attributes:
- *   - variant: "icon" (default) | "text"
+ *   - variant: "icon" (default) | "text" — ignored when slotted content is present
  *   - position: "bottom-left" (default) | "bottom-right" (only for icon variant)
  *   - banner-selector: CSS selector for the banner element (default: "keksmeister-banner")
- *   - label: Button label — overrides i18n default. Used as aria-label (icon) or visible text (text).
+ *   - label: Button label — overrides i18n default. Used as aria-label (icon/slot) or visible text (text).
  *   - lang: Language code for i18n (default: auto-detect from document/navigator)
  *
  * Theming (CSS Custom Properties):
@@ -36,12 +48,15 @@ export class KeksmeisterTrigger extends HTMLElement {
   static readonly tagName = 'keksmeister-trigger';
   static readonly observedAttributes = ['variant', 'position', 'label', 'lang', 'banner-selector'];
 
+  private _hasSlottedContent = false;
+
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
   }
 
   connectedCallback(): void {
+    this._hasSlottedContent = this.hasChildNodes() && this.innerHTML.trim().length > 0;
     this.render();
   }
 
@@ -63,20 +78,33 @@ export class KeksmeisterTrigger extends HTMLElement {
     return translations.trigger?.label ?? 'Cookie-Einstellungen';
   }
 
+  private resolveVariant(): 'icon' | 'text' | 'slot' {
+    if (this._hasSlottedContent) return 'slot';
+    const attr = this.getAttribute('variant');
+    if (attr === 'text') return 'text';
+    return 'icon';
+  }
+
   private render(): void {
     if (!this.shadowRoot) return;
 
-    const variant = this.getAttribute('variant') ?? 'icon';
+    const variant = this.resolveVariant();
     const label = this.resolveLabel();
 
     const style = document.createElement('style');
-    style.textContent = variant === 'text' ? this.textStyles() : this.iconStyles();
+    if (variant === 'icon') {
+      style.textContent = this.iconStyles();
+    } else if (variant === 'text') {
+      style.textContent = this.textStyles();
+    } else {
+      style.textContent = this.slotStyles();
+    }
 
     const button = document.createElement('button');
+    button.setAttribute('type', 'button');
     button.addEventListener('click', () => this.openBanner());
 
     if (variant === 'text') {
-      button.setAttribute('type', 'button');
       const icon = document.createElement('span');
       icon.className = 'km-trigger__icon';
       icon.setAttribute('aria-hidden', 'true');
@@ -84,6 +112,9 @@ export class KeksmeisterTrigger extends HTMLElement {
       const text = document.createElement('span');
       text.textContent = label;
       button.append(icon, text);
+    } else if (variant === 'slot') {
+      button.setAttribute('aria-label', label);
+      button.appendChild(document.createElement('slot'));
     } else {
       button.setAttribute('aria-label', label);
       button.setAttribute('title', label);
@@ -188,6 +219,38 @@ export class KeksmeisterTrigger extends HTMLElement {
 
       @media (prefers-reduced-motion: reduce) {
         button { transition: none; }
+      }
+
+      @media print {
+        :host { display: none !important; }
+      }
+    `;
+  }
+
+  private slotStyles(): string {
+    return /* css */ `
+      :host {
+        display: inline;
+      }
+
+      button {
+        display: inline;
+        background: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+        text-align: inherit;
+        text-decoration: inherit;
+        line-height: inherit;
+      }
+
+      button:focus-visible {
+        outline: 2px solid currentColor;
+        outline-offset: 2px;
+        border-radius: 2px;
       }
 
       @media print {
