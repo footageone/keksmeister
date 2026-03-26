@@ -2,6 +2,8 @@
 
 Keksmeister uses standard Web Components. Vue 3 supports them natively — **no wrapper library needed**.
 
+> Examples use Vue 3.5+ conventions: `useTemplateRef()` for type-safe template refs.
+
 ## Setup
 
 ### 1. Install
@@ -102,14 +104,14 @@ The banner handles all show/hide logic internally. Using `v-if`, `v-show`, or ma
 
 ## Programmatic configuration
 
-For full config with callbacks, use template refs:
+For full config with callbacks, use `useTemplateRef()` (Vue 3.5+):
 
 ```vue
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { useTemplateRef, onMounted } from 'vue';
 import type { KeksmeisterBanner } from 'keksmeister';
 
-const banner = ref<KeksmeisterBanner>();
+const banner = useTemplateRef<KeksmeisterBanner>('banner');
 
 onMounted(() => {
   if (banner.value) {
@@ -163,12 +165,12 @@ Register adapters in `onMounted` — after the banner has initialized:
 
 ```vue
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { useTemplateRef, onMounted } from 'vue';
 import type { KeksmeisterBanner } from 'keksmeister';
 import { ServiceRegistry } from 'keksmeister';
 import { createPostHogAdapter } from 'keksmeister/adapters/posthog';
 
-const banner = ref<KeksmeisterBanner>();
+const banner = useTemplateRef<KeksmeisterBanner>('banner');
 
 onMounted(() => {
   if (banner.value?.manager) {

@@ -2,6 +2,8 @@
 
 Keksmeister provides a thin React wrapper that bridges Web Component patterns (config-as-object, custom events) to idiomatic React props.
 
+> Examples use React 19+ conventions: `ref` as prop (no `forwardRef`), ref callback cleanup functions.
+
 ## Setup
 
 ### 1. Install
@@ -111,33 +113,29 @@ function App() {
 }
 ```
 
-For programmatic config without the wrapper, use a ref:
+For programmatic config without the wrapper, use a ref callback (React 19+):
 
 ```tsx
 import 'keksmeister';
-import { useRef, useEffect } from 'react';
 import type { KeksmeisterBanner } from 'keksmeister';
+import type { KeksmeisterConfig } from 'keksmeister';
+
+const config: KeksmeisterConfig = {
+  categories: [
+    { id: 'essential', label: 'Essential', required: true },
+    { id: 'analytics', label: 'Analytics' },
+  ],
+  privacyUrl: '/privacy',
+  lang: 'en',
+};
 
 function App() {
-  const ref = useRef<KeksmeisterBanner>(null);
-
-  useEffect(() => {
-    if (ref.current) {
-      ref.current.config = {
-        categories: [
-          { id: 'essential', label: 'Essential', required: true },
-          { id: 'analytics', label: 'Analytics' },
-        ],
-        privacyUrl: '/privacy',
-        lang: 'en',
-      };
-    }
-  }, []);
-
   return (
     <>
       {/* @ts-expect-error Web Component */}
-      <keksmeister-banner ref={ref} />
+      <keksmeister-banner ref={(el: KeksmeisterBanner | null) => {
+        if (el) el.config = config;
+      }} />
       {/* @ts-expect-error Web Component */}
       <keksmeister-trigger />
     </>
@@ -179,39 +177,43 @@ function App() {
 }
 ```
 
-## Next.js
+## Next.js (App Router)
 
-In Next.js, import keksmeister only on the client side:
+In Next.js 15+ with the App Router, wrap the consent components in a Client Component boundary:
 
 ```tsx
+// components/cookie-consent.tsx
 'use client';
 
-import dynamic from 'next/dynamic';
+import { KeksmeisterBanner, KeksmeisterTrigger } from 'keksmeister/react';
+import type { KeksmeisterConfig } from 'keksmeister';
 
-const CookieConsent = dynamic(
-  () => import('keksmeister/react').then((mod) => ({
-    default: () => (
-      <>
-        <mod.KeksmeisterBanner
-          config={{
-            categories: [
-              { id: 'essential', label: 'Essential', required: true },
-              { id: 'analytics', label: 'Analytics' },
-            ],
-            privacyUrl: '/privacy',
-            lang: 'en',
-          }}
-        />
-        <mod.KeksmeisterTrigger position="bottom-left" />
-      </>
-    ),
-  })),
-  { ssr: false }
-);
+const config: KeksmeisterConfig = {
+  categories: [
+    { id: 'essential', label: 'Essential', required: true },
+    { id: 'analytics', label: 'Analytics' },
+  ],
+  privacyUrl: '/privacy',
+  lang: 'en',
+};
 
-export default function RootLayout({ children }) {
+export function CookieConsent() {
   return (
-    <html>
+    <>
+      <KeksmeisterBanner config={config} />
+      <KeksmeisterTrigger position="bottom-left" />
+    </>
+  );
+}
+```
+
+```tsx
+// app/layout.tsx (Server Component — no 'use client' needed)
+import { CookieConsent } from '@/components/cookie-consent';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
       <body>
         {children}
         <CookieConsent />
@@ -220,6 +222,8 @@ export default function RootLayout({ children }) {
   );
 }
 ```
+
+> The layout itself stays a Server Component. Only the `CookieConsent` wrapper is a Client Component. This is the recommended Next.js pattern — keep client boundaries as small as possible.
 
 ## Trigger on a privacy page
 

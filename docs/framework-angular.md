@@ -2,6 +2,8 @@
 
 Keksmeister uses standard Web Components. Angular supports them natively — **no wrapper library needed**.
 
+> Examples use Angular 19+ conventions: standalone by default, signal-based queries (`viewChild()`), built-in control flow (`@if`).
+
 ## Setup
 
 ### 1. Install
@@ -31,7 +33,6 @@ import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
 @Component({
   selector: 'app-root',
-  standalone: true,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <router-outlet />
@@ -47,6 +48,8 @@ import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 export class AppComponent {}
 ```
 
+> Since Angular 19, components are standalone by default — no `standalone: true` needed.
+
 **That's it for basic usage.** The banner and trigger are in the DOM permanently. They manage their own visibility.
 
 ## Common mistakes
@@ -57,7 +60,9 @@ export class AppComponent {}
 // WRONG: Don't conditionally render the banner
 @Component({
   template: `
-    <keksmeister-banner *ngIf="showBanner"></keksmeister-banner>
+    @if (showBanner) {
+      <keksmeister-banner />
+    }
   `,
 })
 ```
@@ -72,12 +77,15 @@ ngOnInit() {
 
 ```ts
 // WRONG: Don't manage visibility from Angular
-ngAfterViewInit() {
-  this.banner.nativeElement.style.display = consentGiven ? 'none' : 'block';
+constructor() {
+  const banner = viewChild<ElementRef>('banner');
+  effect(() => {
+    banner()?.nativeElement.style.display = this.consentGiven() ? 'none' : 'block';
+  });
 }
 ```
 
-The banner handles all of this internally. Using `*ngIf`, `[hidden]`, or manual DOM manipulation will break its state machine.
+The banner handles all of this internally. Using `@if`, `[hidden]`, or manual DOM manipulation will break its state machine.
 
 ### Do this instead
 
@@ -85,51 +93,55 @@ The banner handles all of this internally. Using `*ngIf`, `[hidden]`, or manual 
 // CORRECT: Place elements in template, configure if needed
 @Component({
   template: `
-    <keksmeister-banner #banner></keksmeister-banner>
-    <keksmeister-trigger></keksmeister-trigger>
+    <keksmeister-banner #banner />
+    <keksmeister-trigger />
   `,
 })
 ```
 
 ## Programmatic configuration
 
-For full config with callbacks, use `ViewChild`:
+For full config with callbacks, use the signal-based `viewChild()`:
 
 ```ts
 import {
   Component,
-  ViewChild,
+  viewChild,
   ElementRef,
-  AfterViewInit,
+  afterNextRender,
   CUSTOM_ELEMENTS_SCHEMA,
 } from '@angular/core';
 import type { KeksmeisterBanner } from 'keksmeister';
 
 @Component({
   selector: 'app-root',
-  standalone: true,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
-    <keksmeister-banner #banner></keksmeister-banner>
-    <keksmeister-trigger></keksmeister-trigger>
+    <keksmeister-banner #banner />
+    <keksmeister-trigger />
   `,
 })
-export class AppComponent implements AfterViewInit {
-  @ViewChild('banner') bannerRef!: ElementRef<KeksmeisterBanner>;
+export class AppComponent {
+  private banner = viewChild<ElementRef<KeksmeisterBanner>>('banner');
 
-  ngAfterViewInit() {
-    this.bannerRef.nativeElement.config = {
-      categories: [
-        { id: 'essential', label: 'Notwendig', required: true },
-        { id: 'analytics', label: 'Statistiken' },
-        { id: 'marketing', label: 'Marketing' },
-      ],
-      privacyUrl: '/datenschutz',
-      lang: 'de',
-      onConsent: (record) => {
-        console.log('Consent:', record);
-      },
-    };
+  constructor() {
+    afterNextRender(() => {
+      const el = this.banner()?.nativeElement;
+      if (!el) return;
+
+      el.config = {
+        categories: [
+          { id: 'essential', label: 'Notwendig', required: true },
+          { id: 'analytics', label: 'Statistiken' },
+          { id: 'marketing', label: 'Marketing' },
+        ],
+        privacyUrl: '/datenschutz',
+        lang: 'de',
+        onConsent: (record) => {
+          console.log('Consent:', record);
+        },
+      };
+    });
   }
 }
 ```
@@ -143,7 +155,7 @@ Use Angular's event binding with the full event name:
   #banner
   (keksmeister:close)="onConsentClose()"
   (keksmeister:consent)="onConsent($event)"
-></keksmeister-banner>
+/>
 ```
 
 ```ts
@@ -156,21 +168,50 @@ onConsent(event: CustomEvent) {
 }
 ```
 
-## Service adapters
-
-Register adapters in `ngAfterViewInit` — after the banner has initialized:
+Alternatively, use `effect()` to react to the banner's consent state:
 
 ```ts
+import { Component, viewChild, ElementRef, effect, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import type { KeksmeisterBanner } from 'keksmeister';
+
+@Component({
+  selector: 'app-root',
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  template: `<keksmeister-banner #banner />`,
+})
+export class AppComponent {
+  private banner = viewChild<ElementRef<KeksmeisterBanner>>('banner');
+
+  constructor() {
+    effect(() => {
+      const el = this.banner()?.nativeElement;
+      el?.addEventListener('keksmeister:consent', (e: Event) => {
+        console.log('Consent:', (e as CustomEvent).detail);
+      });
+    });
+  }
+}
+```
+
+## Service adapters
+
+Register adapters in `afterNextRender` — after the banner has initialized:
+
+```ts
+import { afterNextRender } from '@angular/core';
 import { ServiceRegistry } from 'keksmeister';
 import { createPostHogAdapter } from 'keksmeister/adapters/posthog';
 import { createGoogleAnalyticsAdapter } from 'keksmeister/adapters/google-analytics';
 
-ngAfterViewInit() {
-  const banner = this.bannerRef.nativeElement;
-  const registry = new ServiceRegistry(banner.manager!);
+constructor() {
+  afterNextRender(() => {
+    const manager = this.banner()?.nativeElement.manager;
+    if (!manager) return;
 
-  registry.register(createPostHogAdapter(posthog));
-  registry.register(createGoogleAnalyticsAdapter());
+    const registry = new ServiceRegistry(manager);
+    registry.register(createPostHogAdapter(posthog));
+    registry.register(createGoogleAnalyticsAdapter());
+  });
 }
 ```
 
@@ -181,14 +222,13 @@ Use the text variant in a specific component template:
 ```ts
 @Component({
   selector: 'app-privacy-page',
-  standalone: true,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <h1>Datenschutz</h1>
     <p>...</p>
 
     <h2>Cookie-Einstellungen anpassen</h2>
-    <keksmeister-trigger variant="text"></keksmeister-trigger>
+    <keksmeister-trigger variant="text" />
   `,
 })
 export class PrivacyPageComponent {}
