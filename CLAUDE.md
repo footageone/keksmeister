@@ -27,6 +27,13 @@ Two consent mechanisms coexist:
 1. **Script blocking** — For `<script>` tags that should not load before consent
 2. **Service adapters** — For libraries already loaded that have their own opt-in/opt-out APIs
 
+## Git Workflow
+
+- **Never push directly to `main`.** All features and bugfixes must go through a pull request.
+- Create a feature branch, commit there, push, and open a PR via `gh pr create`.
+- Branch naming: `feat/<topic>`, `fix/<topic>`, `docs/<topic>`, `chore/<topic>`
+- Direct pushes to `main` are only acceptable for version bumps before `gh release create`.
+
 ## Git Conventions
 
 - **Conventional Commits**: All commit messages must follow the [Conventional Commits](https://www.conventionalcommits.org/) specification
