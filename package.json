@@ -84,7 +84,7 @@
     "url": "https://github.com/footageone/keksmeister/issues"
   },
   "devDependencies": {
-    "@codecov/vite-plugin": "1.9.1",
+    "@codecov/vite-plugin": "2.0.1",
     "@commitlint/cli": "20.5.0",
     "@commitlint/config-conventional": "20.5.0",
     "@vitest/browser": "4.1.4",
