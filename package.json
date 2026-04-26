@@ -92,7 +92,7 @@
     "happy-dom": "20.9.0",
     "husky": "9.1.7",
     "marked": "18.0.2",
-    "terser": "5.46.1",
+    "terser": "5.46.2",
     "typescript": "6.0.3",
     "vite": "8.0.10",
     "vitest": "4.1.5"
