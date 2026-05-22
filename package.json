@@ -91,7 +91,7 @@
     "@vitest/coverage-v8": "4.1.6",
     "happy-dom": "20.9.0",
     "husky": "9.1.7",
-    "marked": "18.0.3",
+    "marked": "18.0.4",
     "terser": "5.47.1",
     "typescript": "6.0.3",
     "vite": "8.0.13",
