@@ -9,7 +9,8 @@
     "dev": "bun --watch src/index.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
-    "export": "sh scripts/export.sh"
+    "export": "sh scripts/export.sh",
+    "prune": "sh scripts/prune.sh"
   },
   "engines": {
     "bun": ">=1.3.0"
