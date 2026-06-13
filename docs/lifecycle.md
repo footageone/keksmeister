@@ -127,3 +127,25 @@ Consent changes
 ```
 
 Adapters are stateless — they call the third-party API every time. Most third-party SDKs (PostHog, Mixpanel, etc.) handle idempotency internally.
+
+## Consent logging lifecycle
+
+When the `logging` option is configured, every decision is also sent to your
+endpoint as a `ConsentRecord`:
+
+```
+Page load
+  → if logging configured, ConsentLogger drains any queued (offline) records
+
+Consent given / updated  (acceptAll, rejectAll, saveCustom)
+  → record { action: 'grant' | 'update' } sent via sendBeacon → fetch fallback
+
+Consent revoked  (revokeAll)
+  → record { action: 'revoke' } sent BEFORE the cookie is cleared
+  → keksmeister:revoke event fires; adapters run onRevoke()
+
+Send fails / offline
+  → record buffered in localStorage, retried on the next page load
+```
+
+See [Consent Proof & Server-Side Logging](./consent-logging.md) for details.

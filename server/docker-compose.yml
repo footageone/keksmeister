@@ -1,0 +1,23 @@
+services:
+  consent-log:
+    # Builds from source. To use the pre-built image instead, comment out the
+    # `build` line and use:
+    #   image: ghcr.io/footageone/keksmeister-consent-log:latest
+    build: .
+    image: keksmeister-consent-log:latest
+    restart: unless-stopped
+    ports:
+      - "8787:8787"
+    environment:
+      # Lock this down to your real hostname(s) in production, e.g.
+      # "footage.one,*.footage.one". Bare hostnames, no scheme; http + https
+      # both match. "*" allows any origin.
+      ALLOWED_HOSTS: "*"
+      PARTITION: "hour"
+      # Uncomment to also store a pseudonymous IP hash for stronger proof:
+      # HASH_IP_SALT: "change-me-to-a-long-random-string"
+    volumes:
+      - consent-data:/data
+
+volumes:
+  consent-data:

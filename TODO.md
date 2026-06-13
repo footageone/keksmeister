@@ -69,8 +69,10 @@
 - [x] Angular integration guide (`keksmeister/angular` — native CUSTOM_ELEMENTS_SCHEMA)
 - [x] React wrapper (`keksmeister/react` — thin wrapper with config-as-prop)
 - [x] Vue integration guide (`keksmeister/vue` — native isCustomElement)
-- [ ] Server-side consent logging middleware (Express/Fastify)
-- [ ] Consent proof export (CSV/JSON for audits)
+- [x] Server-side consent logging server (Bun, file-based, Docker — see `server/`)
+- [x] Built-in consent logger transport (`logging` config: sendBeacon + offline retry queue, logs revocations too)
+- [x] Audit fields on `ConsentRecord` (pseudonymous `subjectId`, `action`: grant/update/revoke)
+- [x] Consent proof export (ZIP of log files for audits — `server/scripts/export.sh`)
 - [ ] Storybook / component playground
 - [ ] npm publish as `keksmeister`
 - [ ] CDN distribution via unpkg/jsdelivr

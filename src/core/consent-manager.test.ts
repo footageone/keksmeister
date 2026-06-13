@@ -378,4 +378,100 @@ describe('ConsentManager', () => {
       expect(manager.isAccepted('essential')).toBe(true);
     });
   });
+
+  describe('audit fields (subjectId + action)', () => {
+    it('assigns a subjectId and grant action on first consent', () => {
+      const onConsent = vi.fn();
+      const manager = new ConsentManager(createConfig({ onConsent }));
+      manager.acceptAll();
+
+      const record: ConsentRecord = onConsent.mock.calls[0][0];
+      expect(typeof record.subjectId).toBe('string');
+      expect(record.subjectId!.length).toBeGreaterThan(0);
+      expect(record.action).toBe('grant');
+    });
+
+    it('marks a later decision as an update with a stable subjectId', () => {
+      const onConsent = vi.fn();
+      const manager = new ConsentManager(createConfig({ onConsent }));
+      manager.acceptAll();
+      manager.saveCustom({ analytics: false });
+
+      const first: ConsentRecord = onConsent.mock.calls[0][0];
+      const second: ConsentRecord = onConsent.mock.calls[1][0];
+      expect(second.action).toBe('update');
+      expect(second.subjectId).toBe(first.subjectId);
+    });
+
+    it('generates a UUIDv4 subjectId via getRandomValues when randomUUID is missing', () => {
+      // Crypto without randomUUID, forcing the getRandomValues branch.
+      vi.stubGlobal('crypto', {
+        getRandomValues: (arr: Uint8Array) => {
+          for (let i = 0; i < arr.length; i++) arr[i] = (i * 16) % 256;
+          return arr;
+        },
+      });
+      const onConsent = vi.fn();
+      const manager = new ConsentManager(createConfig({ onConsent }));
+      manager.acceptAll();
+      const id = (onConsent.mock.calls[0][0] as ConsentRecord).subjectId!;
+      expect(id).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+      );
+      vi.unstubAllGlobals();
+    });
+
+    it('persists the subjectId across manager instances', () => {
+      const config = createConfig();
+      const manager1 = new ConsentManager(config);
+      manager1.acceptAll();
+      const id = manager1['subjectId'];
+
+      const manager2 = new ConsentManager(config);
+      const onConsent = vi.fn();
+      manager2.updateConfig({ onConsent });
+      manager2.saveCustom({ analytics: true });
+      const record: ConsentRecord = onConsent.mock.calls[0][0];
+      expect(record.subjectId).toBe(id);
+      expect(record.action).toBe('update');
+    });
+  });
+
+  describe('server-side logging', () => {
+    it('logs grant and revoke decisions to the endpoint', async () => {
+      const beacon = vi.fn(() => true);
+      vi.stubGlobal('navigator', { sendBeacon: beacon, onLine: true });
+
+      const manager = new ConsentManager(
+        createConfig({ logging: { endpoint: '/api/consent' } })
+      );
+      manager.acceptAll();
+      manager.revokeAll();
+
+      expect(beacon).toHaveBeenCalledTimes(2);
+
+      const grant = JSON.parse(await (beacon.mock.calls[0][1] as Blob).text());
+      expect(grant.action).toBe('grant');
+      expect(typeof grant.subjectId).toBe('string');
+
+      const revoke = JSON.parse(await (beacon.mock.calls[1][1] as Blob).text());
+      expect(revoke.action).toBe('revoke');
+      expect(revoke.method).toBe('revoke');
+      // Same subject across the grant and its revocation.
+      expect(revoke.subjectId).toBe(grant.subjectId);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('does not log when no logging endpoint is configured', () => {
+      const beacon = vi.fn(() => true);
+      vi.stubGlobal('navigator', { sendBeacon: beacon, onLine: true });
+
+      const manager = new ConsentManager(createConfig());
+      manager.acceptAll();
+
+      expect(beacon).not.toHaveBeenCalled();
+      vi.unstubAllGlobals();
+    });
+  });
 });

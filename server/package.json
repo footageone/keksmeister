@@ -1,0 +1,20 @@
+{
+  "name": "@keksmeister/consent-log-server",
+  "version": "0.1.0",
+  "description": "Minimal, database-free consent logging server for Keksmeister. Stores each consent record as a plain JSON file for DSGVO/TDDDG proof.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch src/index.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "export": "sh scripts/export.sh"
+  },
+  "engines": {
+    "bun": ">=1.3.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
