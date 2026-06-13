@@ -340,10 +340,13 @@ export class KeksmeisterBanner extends HTMLElement {
 
     const actions = document.createElement('div');
     actions.className = 'km-modal__actions';
+    // Layer 2: accept-all and reject-all must remain equally accessible. The
+    // reject button was previously styled as a text link, which gave it less
+    // visual weight than accept and conflicted with DSK-OH Rn. 135.
     actions.append(
       this.createButton(t.save, 'save', 'km-btn--primary'),
       this.createButton(t.acceptAll, 'accept-all', 'km-btn--secondary'),
-      this.createButton(t.rejectAll, 'reject-all', 'km-btn--link'),
+      this.createButton(t.rejectAll, 'reject-all', 'km-btn--secondary'),
     );
     modal.appendChild(actions);
 

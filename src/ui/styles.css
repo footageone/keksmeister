@@ -12,7 +12,13 @@
   --km-text-secondary: #555555;
   --km-primary: #1a1a1a;
   --km-primary-text: #ffffff;
-  --km-secondary: transparent;
+  /*
+   * Secondary (reject) shares the primary's solid-filled visual weight and
+   * matches the same contrast band, only with an inverted palette. Required
+   * by DSK-OH "Digitale Dienste" v1.2, Rn. 135: the reject button must be
+   * comparable to accept in size, colour and contrast.
+   */
+  --km-secondary: #e6e6e6;
   --km-secondary-text: #1a1a1a;
   --km-border: #e0e0e0;
   --km-overlay: rgba(0, 0, 0, 0.5);
@@ -116,7 +122,7 @@
 .km-btn--secondary {
   background: var(--km-secondary);
   color: var(--km-secondary-text);
-  border-color: var(--km-border);
+  border-color: var(--km-secondary);
 }
 
 .km-btn--link {
