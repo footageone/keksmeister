@@ -1,0 +1,6 @@
+data
+node_modules
+test
+*.md
+*.zip
+.git

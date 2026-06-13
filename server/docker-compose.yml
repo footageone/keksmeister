@@ -1,0 +1,18 @@
+services:
+  consent-log:
+    build: .
+    image: keksmeister-consent-log:latest
+    restart: unless-stopped
+    ports:
+      - "8787:8787"
+    environment:
+      # Lock this down to your real site origin(s) in production.
+      ALLOWED_ORIGINS: "*"
+      PARTITION: "hour"
+      # Uncomment to also store a pseudonymous IP hash for stronger proof:
+      # HASH_IP_SALT: "change-me-to-a-long-random-string"
+    volumes:
+      - consent-data:/data
+
+volumes:
+  consent-data:

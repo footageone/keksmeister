@@ -53,7 +53,7 @@ We evaluated every major open-source consent library and found that none combine
 - **CSS Custom Properties** — Fully themeable from outside Shadow DOM
 - **i18n** — German and English built-in, extensible with custom translations
 - **Accessible** — Keyboard navigation, focus management, ARIA attributes
-- **Consent proof** — `onConsent` callback for server-side logging (you own the endpoint)
+- **Consent proof** — `onConsent` callback for server-side logging (you own the endpoint), plus an optional minimal file-based logging server in [`server/`](server/README.md) (Bun + Docker, no database)
 
 ## Quick Start
 
