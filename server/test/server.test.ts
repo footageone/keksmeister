@@ -142,3 +142,50 @@ test('custom ingest path is honoured', async () => {
   );
   expect(res.status).toBe(201);
 });
+
+function preflight(h: ReturnType<typeof handler>, origin: string, requestHeaders?: string) {
+  const headers: Record<string, string> = { origin };
+  if (requestHeaders) headers['access-control-request-headers'] = requestHeaders;
+  return h(new Request('http://x/consent', { method: 'OPTIONS', headers }));
+}
+
+test('CORS: wildcard subdomain host is echoed for both http and https', async () => {
+  const h = handler({ ALLOWED_HOSTS: '*.footage.one' });
+  for (const origin of ['https://app.footage.one', 'http://app.footage.one']) {
+    const res = await preflight(h, origin);
+    expect(res.headers.get('access-control-allow-origin')).toBe(origin);
+  }
+});
+
+test('CORS: wildcard does not match the apex or a foreign host', async () => {
+  const h = handler({ ALLOWED_HOSTS: '*.footage.one' });
+  for (const origin of [
+    'https://footage.one',
+    'https://evil-footage.one',
+    'https://footage.one.evil.com',
+  ]) {
+    const res = await preflight(h, origin);
+    expect(res.headers.get('access-control-allow-origin')).toBeNull();
+  }
+});
+
+test('CORS: exact host matches regardless of scheme but not subdomains', async () => {
+  const h = handler({ ALLOWED_HOSTS: 'footage.one' });
+  const ok = await preflight(h, 'http://footage.one');
+  expect(ok.headers.get('access-control-allow-origin')).toBe('http://footage.one');
+  const sub = await preflight(h, 'https://app.footage.one');
+  expect(sub.headers.get('access-control-allow-origin')).toBeNull();
+});
+
+test('CORS: accidental scheme in ALLOWED_HOSTS is tolerated', async () => {
+  const h = handler({ ALLOWED_HOSTS: 'https://footage.one, *.example.com' });
+  const res = await preflight(h, 'https://footage.one');
+  expect(res.headers.get('access-control-allow-origin')).toBe('https://footage.one');
+  const res2 = await preflight(h, 'https://a.example.com');
+  expect(res2.headers.get('access-control-allow-origin')).toBe('https://a.example.com');
+});
+
+test('CORS: preflight echoes requested headers', async () => {
+  const res = await preflight(handler(), 'https://x.example', 'x-api-key, content-type');
+  expect(res.headers.get('access-control-allow-headers')).toBe('x-api-key, content-type');
+});

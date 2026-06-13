@@ -75,7 +75,7 @@ All via environment variables — every one has a default:
 | `HOST`            | `0.0.0.0`   | Bind address |
 | `DATA_DIR`        | `./data`    | Where log files are written |
 | `INGEST_PATH`     | `/consent`  | Path that accepts `POST`s |
-| `ALLOWED_ORIGINS` | `*`         | Comma-separated CORS allow-list (set to your site origin in prod) |
+| `ALLOWED_HOSTS`   | `*`         | Comma-separated CORS allow-list of **bare hostnames** (no scheme; http + https both match). Supports a leading `*.` for subdomains, e.g. `footage.one,*.footage.one`. `*` allows any origin. |
 | `MAX_BODY_BYTES`  | `16384`     | Reject larger request bodies |
 | `PARTITION`       | `hour`      | Directory bucket size: `hour` or `day` |
 | `HASH_IP_SALT`    | _(unset)_   | If set, store a SHA-256 hash of the client IP (the raw IP is **never** stored) |
@@ -108,7 +108,8 @@ onConsent: (record) => {
 },
 ```
 
-> Set `ALLOWED_ORIGINS` to your site's origin so only your pages can post.
+> Set `ALLOWED_HOSTS` to your site's hostname(s) so only your pages can post,
+> e.g. `footage.one,*.footage.one`.
 
 ## Docker
 
@@ -119,7 +120,7 @@ docker build -t keksmeister-consent-log ./server
 # Run with a named volume for the logs
 docker run -d --name consent-log \
   -p 8787:8787 \
-  -e ALLOWED_ORIGINS="https://www.example.com" \
+  -e ALLOWED_HOSTS="example.com,*.example.com" \
   -v consent-data:/data \
   keksmeister-consent-log
 ```

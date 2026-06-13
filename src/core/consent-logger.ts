@@ -54,12 +54,19 @@ export class ConsentLogger {
     const queue = this.readQueue();
     if (queue.length === 0) return;
 
-    const remaining: ConsentRecord[] = [];
+    // Send the queue front-to-back, stopping at the first failure so we don't
+    // hammer a down endpoint with the whole backlog.
+    let sentCount = 0;
     for (const item of queue) {
-      const ok = await this.dispatchFetch(item);
-      if (!ok) remaining.push(item);
+      if (!(await this.dispatchFetch(item))) break;
+      sentCount++;
     }
-    this.writeQueue(remaining);
+    if (sentCount === 0) return;
+
+    // Re-read before writing: records appended by enqueue() during the awaits
+    // above live at the tail, so dropping only the sent prefix preserves them.
+    const current = this.readQueue();
+    this.writeQueue(current.slice(sentCount));
   }
 
   private enrich(record: ConsentRecord): ConsentRecord {

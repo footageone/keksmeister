@@ -129,4 +129,50 @@ describe('ConsentLogger', () => {
       expect(queued.map((r: ConsentRecord) => r.subjectId)).toEqual(['b', 'c']);
     });
   });
+
+  it('stops flushing at the first failure and keeps the rest', async () => {
+    localStorage.setItem(
+      QUEUE_KEY,
+      JSON.stringify([
+        { ...record, subjectId: 'a' },
+        { ...record, subjectId: 'b' },
+      ])
+    );
+    vi.stubGlobal('navigator', { onLine: true });
+    let call = 0;
+    const fetchMock = vi.fn(async () => (++call === 1 ? okResponse() : failResponse()));
+    vi.stubGlobal('fetch', fetchMock);
+
+    new ConsentLogger({ endpoint: '/c' });
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => {
+      const queued = JSON.parse(localStorage.getItem(QUEUE_KEY) ?? '[]');
+      expect(queued.map((r: ConsentRecord) => r.subjectId)).toEqual(['b']);
+    });
+  });
+
+  it('preserves records enqueued while a flush is in flight', async () => {
+    localStorage.setItem(QUEUE_KEY, JSON.stringify([{ ...record, subjectId: 'queued-1' }]));
+    vi.stubGlobal('navigator', { onLine: true });
+
+    // Simulate a new record being appended to the queue during the network await.
+    const fetchMock = vi.fn(async () => {
+      const q = JSON.parse(localStorage.getItem(QUEUE_KEY) ?? '[]');
+      if (!q.some((r: ConsentRecord) => r.subjectId === 'queued-2')) {
+        q.push({ ...record, subjectId: 'queued-2' });
+        localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
+      }
+      return okResponse();
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    new ConsentLogger({ endpoint: '/c' });
+
+    // The sent record ('queued-1') is dropped, but the one added mid-flush survives.
+    await vi.waitFor(() => {
+      const queued = JSON.parse(localStorage.getItem(QUEUE_KEY) ?? '[]');
+      expect(queued.map((r: ConsentRecord) => r.subjectId)).toEqual(['queued-2']);
+    });
+  });
 });

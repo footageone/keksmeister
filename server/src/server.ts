@@ -11,23 +11,61 @@ import { writeEnvelope, type StoredEnvelope } from './store.ts';
 
 const JSON_HEADERS = { 'content-type': 'application/json' } as const;
 
-/** Build CORS headers for a given request origin. */
+/**
+ * Match a request's Origin against a bare hostname pattern.
+ * Patterns are hostnames without a scheme; both http and https are accepted.
+ * A leading `*.` matches any subdomain but not the apex domain.
+ */
+function hostMatches(pattern: string, host: string): boolean {
+  if (pattern === '*') return true;
+  if (pattern.startsWith('*.')) {
+    const suffix = pattern.slice(1); // ".footage.one"
+    return host.endsWith(suffix) && host.length > suffix.length;
+  }
+  return pattern === host;
+}
+
+/** Whether an Origin header value is permitted by the allow-list. */
+export function isAllowedOrigin(origin: string, allowedHosts: string[]): boolean {
+  if (allowedHosts.includes('*')) return true;
+  let host: string;
+  try {
+    host = new URL(origin).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  if (!host) return false;
+  return allowedHosts.some((pattern) => hostMatches(pattern, host));
+}
+
+/** Build CORS headers for a request. */
 export function corsHeaders(
   config: Config,
-  origin: string | null
+  req: Request
 ): Record<string, string> {
+  const origin = req.headers.get('origin');
+  // Echo the headers the browser announced in the preflight so clients can use
+  // custom headers (e.g. an API key via ConsentLoggerOptions.headers). Falls
+  // back to content-type for the common case.
+  const requestedHeaders = req.headers.get('access-control-request-headers');
+
   const headers: Record<string, string> = {
     'access-control-allow-methods': 'POST, OPTIONS',
-    'access-control-allow-headers': 'content-type',
+    'access-control-allow-headers': requestedHeaders ?? 'content-type',
     'access-control-max-age': '86400',
   };
 
-  if (config.allowedOrigins.includes('*')) {
+  if (config.allowedHosts.includes('*')) {
     headers['access-control-allow-origin'] = '*';
-  } else if (origin && config.allowedOrigins.includes(origin)) {
+  } else if (origin && isAllowedOrigin(origin, config.allowedHosts)) {
+    // Echo the exact origin back, so the matched host works over both schemes.
     headers['access-control-allow-origin'] = origin;
-    headers['vary'] = 'Origin';
   }
+
+  // Responses vary by these request headers, so caches must key on them.
+  const vary = ['Origin'];
+  if (requestedHeaders) vary.push('Access-Control-Request-Headers');
+  headers['vary'] = vary.join(', ');
 
   return headers;
 }
@@ -46,7 +84,7 @@ function json(
 export function createHandler(config: Config) {
   return async function handle(req: Request, ip?: string): Promise<Response> {
     const url = new URL(req.url);
-    const cors = corsHeaders(config, req.headers.get('origin'));
+    const cors = corsHeaders(config, req);
 
     // CORS preflight
     if (req.method === 'OPTIONS') {
@@ -60,6 +98,9 @@ export function createHandler(config: Config) {
 
     // Consent ingest
     if (req.method === 'POST' && url.pathname === config.ingestPath) {
+      // Primary protection against large bodies is Bun.serve's
+      // `maxRequestBodySize` (see index.ts), which rejects before we get here.
+      // This Content-Length check is a fast, transport-agnostic early-out.
       const declared = Number(req.headers.get('content-length') ?? '0');
       if (Number.isFinite(declared) && declared > config.maxBodyBytes) {
         return json({ error: 'payload too large' }, 413, cors);

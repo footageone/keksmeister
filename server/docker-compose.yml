@@ -6,8 +6,10 @@ services:
     ports:
       - "8787:8787"
     environment:
-      # Lock this down to your real site origin(s) in production.
-      ALLOWED_ORIGINS: "*"
+      # Lock this down to your real hostname(s) in production, e.g.
+      # "footage.one,*.footage.one". Bare hostnames, no scheme; http + https
+      # both match. "*" allows any origin.
+      ALLOWED_HOSTS: "*"
       PARTITION: "hour"
       # Uncomment to also store a pseudonymous IP hash for stronger proof:
       # HASH_IP_SALT: "change-me-to-a-long-random-string"

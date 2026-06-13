@@ -11,6 +11,10 @@ const handle = createHandler(config);
 const server = Bun.serve({
   port: config.port,
   hostname: config.host,
+  // Reject oversized bodies at the server boundary (Bun returns 413 before the
+  // handler runs), so a body without a Content-Length can't be buffered into
+  // memory. A small headroom is added for the JSON envelope overhead.
+  maxRequestBodySize: config.maxBodyBytes + 1024,
   fetch(req, srv) {
     const ip = srv.requestIP(req)?.address;
     return handle(req, ip);
