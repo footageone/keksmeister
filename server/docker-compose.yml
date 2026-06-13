@@ -1,5 +1,8 @@
 services:
   consent-log:
+    # Builds from source. To use the pre-built image instead, comment out the
+    # `build` line and use:
+    #   image: ghcr.io/footageone/keksmeister-consent-log:latest
     build: .
     image: keksmeister-consent-log:latest
     restart: unless-stopped

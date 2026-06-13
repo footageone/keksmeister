@@ -113,11 +113,32 @@ onConsent: (record) => {
 
 ## Docker
 
+### Use the published image (recommended)
+
+Pre-built multi-arch images (linux/amd64 + linux/arm64) are published to the
+GitHub Container Registry:
+
 ```sh
-# Build
+docker pull ghcr.io/footageone/keksmeister-consent-log:latest
+
+docker run -d --name consent-log \
+  -p 8787:8787 \
+  -e ALLOWED_HOSTS="example.com,*.example.com" \
+  -v consent-data:/data \
+  ghcr.io/footageone/keksmeister-consent-log:latest
+```
+
+Available tags:
+
+- `latest` — the most recent released image
+- `X.Y.Z` — a specific release (e.g. `1.0.0`)
+- `edge` — the latest manual/`workflow_dispatch` build
+
+### Build it yourself
+
+```sh
 docker build -t keksmeister-consent-log ./server
 
-# Run with a named volume for the logs
 docker run -d --name consent-log \
   -p 8787:8787 \
   -e ALLOWED_HOSTS="example.com,*.example.com" \
@@ -125,12 +146,30 @@ docker run -d --name consent-log \
   keksmeister-consent-log
 ```
 
-Or with Compose:
+### Compose
+
+`docker-compose.yml` builds from source by default. To run the published image
+instead, replace the `build: .` line with
+`image: ghcr.io/footageone/keksmeister-consent-log:latest`.
 
 ```sh
 cd server
 docker compose up -d
 ```
+
+### Releasing a new image
+
+The image is published by the
+[`publish-server.yml`](../.github/workflows/publish-server.yml) workflow. Push a
+tag of the form `server-vX.Y.Z` to release that version (also updates `latest`):
+
+```sh
+git tag server-v1.0.0
+git push origin server-v1.0.0
+```
+
+You can also trigger the workflow manually (`workflow_dispatch`), which publishes
+the `edge` tag.
 
 ## Regulator export
 

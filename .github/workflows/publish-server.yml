@@ -1,0 +1,56 @@
+name: Publish consent-log image
+
+on:
+  push:
+    tags:
+      - 'server-v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Set up QEMU (multi-arch emulation)
+        run: docker run --privileged --rm tonistiigi/binfmt --install arm64,amd64
+
+      - name: Set up Buildx
+        run: |
+          docker buildx create --use --name keksmeister-builder
+          docker buildx inspect --bootstrap
+
+      - name: Compute image tags
+        id: meta
+        run: |
+          IMAGE="ghcr.io/$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')/keksmeister-consent-log"
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#server-v}"
+            TAGS="$IMAGE:$VERSION,$IMAGE:latest"
+          else
+            TAGS="$IMAGE:edge"
+          fi
+          echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
+          echo "Publishing: $TAGS"
+
+      - name: Build and push
+        run: |
+          IFS=',' read -ra TAGS <<< "${{ steps.meta.outputs.tags }}"
+          ARGS=()
+          for t in "${TAGS[@]}"; do ARGS+=(--tag "$t"); done
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            "${ARGS[@]}" \
+            --label "org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
+            --label "org.opencontainers.image.revision=${{ github.sha }}" \
+            --label "org.opencontainers.image.description=Keksmeister consent logging server" \
+            --push \
+            ./server

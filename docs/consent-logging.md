@@ -98,8 +98,9 @@ shared volume in parallel, and a regulator export is just a ZIP of the folder.
 ```sh
 cd server
 bun run start          # http://localhost:8787  (POST /consent)
-# or:
-docker compose up -d
+# or run the pre-built multi-arch image:
+docker run -d -p 8787:8787 -v consent-data:/data \
+  ghcr.io/footageone/keksmeister-consent-log:latest
 ```
 
 Point the banner at it:
