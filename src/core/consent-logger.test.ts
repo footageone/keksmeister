@@ -68,6 +68,39 @@ describe('ConsentLogger', () => {
     expect(headers['x-api-key']).toBe('k');
   });
 
+  it('uses fetch (not beacon) when transport is "beacon" but headers are set', async () => {
+    const beacon = vi.fn(() => true);
+    const fetchMock = vi.fn(async () => okResponse());
+    vi.stubGlobal('navigator', { sendBeacon: beacon, onLine: true });
+    vi.stubGlobal('fetch', fetchMock);
+
+    new ConsentLogger({
+      endpoint: '/c',
+      transport: 'beacon',
+      headers: { 'x-api-key': 'k' },
+    }).log(record);
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(beacon).not.toHaveBeenCalled();
+  });
+
+  it('forces application/json even if the caller overrides content-type', async () => {
+    const fetchMock = vi.fn(async () => okResponse());
+    vi.stubGlobal('navigator', { onLine: true });
+    vi.stubGlobal('fetch', fetchMock);
+
+    new ConsentLogger({
+      endpoint: '/c',
+      headers: { 'Content-Type': 'text/plain', 'x-api-key': 'k' },
+    }).log(record);
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const headers = fetchMock.mock.calls[0]![1]!.headers as Record<string, string>;
+    expect(headers['content-type']).toBe('application/json');
+    expect(headers['Content-Type']).toBeUndefined();
+    expect(headers['x-api-key']).toBe('k');
+  });
+
   it('attaches userAgent when includeUserAgent is set', async () => {
     const fetchMock = vi.fn(async () => okResponse());
     vi.stubGlobal('navigator', { onLine: true, userAgent: 'TestUA/1.0' });

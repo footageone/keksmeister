@@ -403,6 +403,24 @@ describe('ConsentManager', () => {
       expect(second.subjectId).toBe(first.subjectId);
     });
 
+    it('generates a UUIDv4 subjectId via getRandomValues when randomUUID is missing', () => {
+      // Crypto without randomUUID, forcing the getRandomValues branch.
+      vi.stubGlobal('crypto', {
+        getRandomValues: (arr: Uint8Array) => {
+          for (let i = 0; i < arr.length; i++) arr[i] = (i * 16) % 256;
+          return arr;
+        },
+      });
+      const onConsent = vi.fn();
+      const manager = new ConsentManager(createConfig({ onConsent }));
+      manager.acceptAll();
+      const id = (onConsent.mock.calls[0][0] as ConsentRecord).subjectId!;
+      expect(id).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+      );
+      vi.unstubAllGlobals();
+    });
+
     it('persists the subjectId across manager instances', () => {
       const config = createConfig();
       const manager1 = new ConsentManager(config);

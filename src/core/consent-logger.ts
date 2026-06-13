@@ -82,7 +82,9 @@ export class ConsentLogger {
       typeof globalThis.navigator?.sendBeacon === 'function' &&
       Object.keys(this.headers).length === 0;
 
-    if (this.transport === 'beacon' || (this.transport === 'auto' && canBeacon)) {
+    // Beacon is only viable without custom headers (beacons can't set them), so
+    // gate it for both 'beacon' and 'auto'. With headers, we always use fetch.
+    if ((this.transport === 'beacon' || this.transport === 'auto') && canBeacon) {
       if (this.sendBeacon(payload)) return true;
       // Beacon refused the payload — fall through to fetch.
     }
@@ -105,7 +107,7 @@ export class ConsentLogger {
     try {
       const res = await globalThis.fetch(this.endpoint, {
         method: 'POST',
-        headers: { 'content-type': 'application/json', ...this.headers },
+        headers: this.buildFetchHeaders(),
         body: JSON.stringify(payload),
         keepalive: true,
       });
@@ -113,6 +115,20 @@ export class ConsentLogger {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Merge custom headers but always force `content-type: application/json`,
+   * case-insensitively, so a caller can't accidentally break ingestion (e.g. by
+   * passing `Content-Type: text/plain`).
+   */
+  private buildFetchHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {};
+    for (const [key, value] of Object.entries(this.headers)) {
+      if (key.toLowerCase() !== 'content-type') headers[key] = value;
+    }
+    headers['content-type'] = 'application/json';
+    return headers;
   }
 
   private enqueue(payload: ConsentRecord): void {

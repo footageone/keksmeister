@@ -189,3 +189,15 @@ test('CORS: preflight echoes requested headers', async () => {
   const res = await preflight(handler(), 'https://x.example', 'x-api-key, content-type');
   expect(res.headers.get('access-control-allow-headers')).toBe('x-api-key, content-type');
 });
+
+test('CORS: host:port entry matches an origin on that port', async () => {
+  const h = handler({ ALLOWED_HOSTS: 'localhost:5173' });
+  const res = await preflight(h, 'http://localhost:5173');
+  expect(res.headers.get('access-control-allow-origin')).toBe('http://localhost:5173');
+});
+
+test('CORS: IPv6 literal entry matches regardless of brackets/port', async () => {
+  const h = handler({ ALLOWED_HOSTS: '[::1]:5173' });
+  const res = await preflight(h, 'http://[::1]:5173');
+  expect(res.headers.get('access-control-allow-origin')).toBe('http://[::1]:5173');
+});

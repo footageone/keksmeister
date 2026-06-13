@@ -40,12 +40,25 @@ function positiveInt(value: string | undefined, fallback: number): number {
   return Number.isFinite(n) && n > 0 ? n : fallback;
 }
 
-/** Normalise an allow-list entry to a bare lowercase hostname. */
+/**
+ * Normalise an allow-list entry to a bare lowercase hostname, matching what
+ * `new URL(origin).hostname` (minus brackets) yields: no scheme, no path, no
+ * port, and no IPv6 brackets. So `https://localhost:5173/` and `[::1]:5173`
+ * become `localhost` and `::1`.
+ */
 function normalizeHost(entry: string): string {
-  const e = entry.trim().toLowerCase();
+  let e = entry.trim().toLowerCase();
   if (e === '*') return e;
-  // Tolerate an accidental scheme or trailing path/port-less slash.
-  return e.replace(/^[a-z][a-z0-9+.-]*:\/\//, '').replace(/\/.*$/, '');
+  // Strip an accidental scheme and any path.
+  e = e.replace(/^[a-z][a-z0-9+.-]*:\/\//, '').replace(/\/.*$/, '');
+  if (e.startsWith('[')) {
+    // IPv6 literal, optionally with a port: [::1] or [::1]:5173
+    const end = e.indexOf(']');
+    return end === -1 ? e : e.slice(1, end);
+  }
+  // Drop a trailing :port (a non-IPv6 host has no colons of its own).
+  const colon = e.indexOf(':');
+  return colon === -1 ? e : e.slice(0, colon);
 }
 
 export function loadConfig(

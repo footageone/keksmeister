@@ -34,6 +34,8 @@ export function isAllowedOrigin(origin: string, allowedHosts: string[]): boolean
   } catch {
     return false;
   }
+  // URL().hostname keeps IPv6 brackets ([::1]); drop them to match normalised entries.
+  if (host.startsWith('[') && host.endsWith(']')) host = host.slice(1, -1);
   if (!host) return false;
   return allowedHosts.some((pattern) => hostMatches(pattern, host));
 }
