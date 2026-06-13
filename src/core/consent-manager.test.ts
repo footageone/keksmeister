@@ -319,10 +319,31 @@ describe('ConsentManager', () => {
       expect(manager2.shouldShowBanner).toBe(true);
     });
 
-    it('does not expire when maxAgeDays is not set', () => {
+    it('uses the 180-day default when maxAgeDays is not configured', () => {
       const config = createConfig();
       const manager1 = new ConsentManager(config);
       manager1.acceptAll();
+
+      // Push the stored decision past the implicit 180-day window.
+      const store = manager1['store'];
+      const record = store.read()!;
+      record.timestamp = new Date(Date.now() - 181 * 864e5).toISOString();
+      store.write(record);
+
+      const manager2 = new ConsentManager(config);
+      expect(manager2.isConsentExpired).toBe(true);
+      expect(manager2.shouldShowBanner).toBe(true);
+    });
+
+    it('disables expiry entirely when maxAgeDays is 0', () => {
+      const config = createConfig({ consentMaxAgeDays: 0 });
+      const manager1 = new ConsentManager(config);
+      manager1.acceptAll();
+
+      const store = manager1['store'];
+      const record = store.read()!;
+      record.timestamp = new Date(Date.now() - 5 * 365 * 864e5).toISOString();
+      store.write(record);
 
       const manager2 = new ConsentManager(config);
       expect(manager2.isConsentExpired).toBe(false);
@@ -337,6 +358,37 @@ describe('ConsentManager', () => {
       const manager2 = new ConsentManager(config);
       expect(manager2.isConsentExpired).toBe(false);
       expect(manager2.shouldShowBanner).toBe(false);
+    });
+
+    it('treats NaN / Infinity / negative as misconfigured and uses the default', () => {
+      for (const bad of [NaN, Infinity, -Infinity, -1, -180]) {
+        const config = createConfig({ consentMaxAgeDays: bad });
+        const m1 = new ConsentManager(config);
+        m1.acceptAll();
+
+        const store = m1['store'];
+        const record = store.read()!;
+        record.timestamp = new Date(Date.now() - 181 * 864e5).toISOString();
+        store.write(record);
+
+        const m2 = new ConsentManager(config);
+        expect(m2.isConsentExpired, `consentMaxAgeDays=${String(bad)}`).toBe(true);
+      }
+    });
+
+    it('treats a corrupted stored timestamp as expired', () => {
+      const config = createConfig({ consentMaxAgeDays: 180 });
+      const m1 = new ConsentManager(config);
+      m1.acceptAll();
+
+      const store = m1['store'];
+      const record = store.read()!;
+      record.timestamp = 'not-a-real-date';
+      store.write(record);
+
+      const m2 = new ConsentManager(config);
+      expect(m2.isConsentExpired).toBe(true);
+      expect(m2.shouldShowBanner).toBe(true);
     });
   });
 

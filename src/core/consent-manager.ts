@@ -8,6 +8,15 @@ import type {
 } from './types.js';
 
 /**
+ * Default re-prompt window. Picked to match the CNIL six-month guidance,
+ * which most EU DPAs accept as a defensible upper bound for how long a
+ * consent decision should stand without being re-asked. Operators can
+ * override via `KeksmeisterConfig.consentMaxAgeDays`, including disabling
+ * the re-prompt by setting it to `0`.
+ */
+const DEFAULT_CONSENT_MAX_AGE_DAYS = 180;
+
+/**
  * Generate a pseudonymous UUIDv4. Prefers crypto.randomUUID, then a
  * crypto.getRandomValues-based v4, and only falls back to Math.random in
  * environments without Web Crypto (rare, non-secure contexts).
@@ -89,15 +98,35 @@ export class ConsentManager extends EventTarget {
     return false;
   }
 
-  /** Whether the consent has exceeded the configured consentMaxAgeDays. */
+  /**
+   * Whether the stored consent has exceeded the re-prompt window.
+   * Uses `consentMaxAgeDays` when configured; otherwise falls back to
+   * {@link DEFAULT_CONSENT_MAX_AGE_DAYS} (CNIL six-month guidance). Set
+   * `consentMaxAgeDays: 0` to disable the re-prompt entirely.
+   *
+   * Invariants:
+   * - Only an exact `0` disables expiry. Negative numbers and any
+   *   non-finite value (NaN, ±Infinity) fall back to the default — a
+   *   misconfigured `NaN` from a runtime cast must not silently turn off
+   *   re-prompting.
+   * - A stored timestamp that cannot be parsed is treated as expired so
+   *   a corrupted cookie can't suppress the banner.
+   */
   get isConsentExpired(): boolean {
-    const maxAgeDays = this.config.consentMaxAgeDays;
-    if (!maxAgeDays) return false;
+    const configured = this.config.consentMaxAgeDays;
+    const maxAgeDays =
+      configured === 0
+        ? 0
+        : typeof configured === 'number' && Number.isFinite(configured) && configured > 0
+          ? configured
+          : DEFAULT_CONSENT_MAX_AGE_DAYS;
+    if (maxAgeDays === 0) return false;
 
     const record = this.store.read();
     if (!record) return false;
 
     const consentDate = new Date(record.timestamp).getTime();
+    if (!Number.isFinite(consentDate)) return true;
     const maxAgeMs = maxAgeDays * 864e5;
     return Date.now() - consentDate > maxAgeMs;
   }

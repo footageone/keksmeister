@@ -179,9 +179,10 @@ export interface KeksmeisterConfig {
     functionality_storage?: string;
   };
   /**
-   * Re-prompt for consent after this many days, even if the cookie hasn't expired.
-   * Useful for CNIL compliance (recommended: 180 days / 6 months).
-   * Default: undefined (no re-prompt, consent valid until cookie expires)
+   * Re-prompt for consent after this many days, even if the cookie hasn't
+   * expired. Defaults to **180** to match the CNIL six-month guidance, which
+   * most EU DPAs accept as a defensible upper bound. Set to `0` to disable
+   * the re-prompt entirely (consent then stands until the cookie expires).
    */
   consentMaxAgeDays?: number;
   /**
