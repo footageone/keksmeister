@@ -191,7 +191,7 @@ docker exec consent-log sh -c 'cd /data && zip -r - .' > consent-export.zip
 ## Retention pruning
 
 Once your retention window has elapsed, delete the records that exceeded it —
-keeping them longer than necessary violates the data-minimisation principle
+keeping them longer than necessary violates the storage limitation principle
 (Art. 5(1)(e) DSGVO).
 
 ```sh
