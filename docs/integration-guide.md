@@ -23,6 +23,14 @@ The banner decides on its own when to show:
 
 The trigger is always in the DOM but only useful after consent (to re-open settings).
 
+> **Compliance requirement.** DSGVO Art. 7(3) requires that withdrawal of
+> consent be **as easy as giving it**. Place ``<keksmeister-trigger>`` on
+> *every* page that also carries the banner (typically in the footer). A
+> page without a trigger does not satisfy Art. 7(3) — even though the
+> underlying ``ConsentManager`` API still works. See
+> [docs/compliance.md](compliance.md#trigger-placement--required-for-dsgvo-art-73)
+> for the full picture.
+
 ### How banner and trigger connect
 
 The trigger finds the banner via a CSS selector (default: `"keksmeister-banner"`). When clicked, it calls `banner.openSettings()`. That's the entire connection — no shared state, no event bus, no service injection.

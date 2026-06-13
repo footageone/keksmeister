@@ -1,8 +1,12 @@
 # Consent Proof & Server-Side Logging
 
-DSGVO / TDDDG require you to **prove** consent — who consented, to what, when,
-and against which banner version. Keksmeister produces an audit-ready record for
-every decision and can ship it to your backend for you.
+**§ 25 TDDDG** (in force since May 2024, replacing TTDSG) and **DSGVO Art. 7**
+require you to **prove** consent — who consented, to what, when, and against
+which banner version. Keksmeister produces an audit-ready record for every
+decision and can ship it to your backend for you. For the full mapping of
+library features to legal requirements (including the **EinwV / § 26 TDDDG**
+boundary — Keksmeister is not an anerkannter Einwilligungsverwaltungsdienst),
+see [compliance.md](compliance.md).
 
 ## What a consent record contains
 
