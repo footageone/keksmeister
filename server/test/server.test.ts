@@ -132,6 +132,78 @@ test('no ipHash when no salt configured', async () => {
   expect(content.ipHash).toBeUndefined();
 });
 
+test('POST /consent/snapshot stores a snapshot in revisions/', async () => {
+  const snapshot = {
+    revision: '3',
+    capturedAt: '2026-06-13T14:00:00.000Z',
+    categories: [{ id: 'analytics', label: 'Analytics' }],
+    privacyUrl: '/privacy',
+  };
+  const res = await handler()(
+    new Request('http://x/consent/snapshot', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(snapshot),
+    })
+  );
+  expect(res.status).toBe(201);
+  expect(((await res.json()) as { status: string }).status).toBe('stored');
+
+  const files = await Array.fromAsync(new Bun.Glob('revisions/*.json').scan({ cwd: dir }));
+  expect(files).toHaveLength(1);
+});
+
+test('POST /consent/snapshot is idempotent for the same content', async () => {
+  const snapshot = {
+    revision: '3',
+    capturedAt: '2026-06-13T14:00:00.000Z',
+    categories: [{ id: 'analytics', label: 'Analytics' }],
+    privacyUrl: '/privacy',
+  };
+  const h = handler();
+  await h(
+    new Request('http://x/consent/snapshot', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(snapshot),
+    })
+  );
+  // Second send with a different capturedAt — must dedupe.
+  const second = await h(
+    new Request('http://x/consent/snapshot', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ ...snapshot, capturedAt: 'later' }),
+    })
+  );
+  expect(((await second.json()) as { status: string }).status).toBe('duplicate');
+
+  const files = await Array.fromAsync(new Bun.Glob('revisions/*.json').scan({ cwd: dir }));
+  expect(files).toHaveLength(1);
+});
+
+test('snapshot rejects non-object bodies', async () => {
+  const res = await handler()(
+    new Request('http://x/consent/snapshot', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '"nope"',
+    })
+  );
+  expect(res.status).toBe(400);
+});
+
+test('SNAPSHOT_PATH override is honoured', async () => {
+  const res = await handler({ SNAPSHOT_PATH: '/api/snap' })(
+    new Request('http://x/api/snap', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ revision: '1', categories: [], privacyUrl: '/' }),
+    })
+  );
+  expect(res.status).toBe(201);
+});
+
 test('custom ingest path is honoured', async () => {
   const res = await handler({ INGEST_PATH: '/api/consent' })(
     new Request('http://x/api/consent', {

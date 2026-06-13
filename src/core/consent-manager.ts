@@ -3,9 +3,22 @@ import { CookieStore } from './cookie-store.js';
 import type {
   ConsentCategory,
   ConsentChoices,
+  ConsentConfigSnapshot,
   ConsentRecord,
   KeksmeisterConfig,
+  KeksmeisterTranslations,
 } from './types.js';
+
+/**
+ * Decouple snapshot data from its source. structuredClone is the standard
+ * deep clone; the JSON fallback covers older runtimes (and the test sandbox).
+ */
+function deepClone<T>(value: T): T {
+  if (typeof globalThis.structuredClone === 'function') {
+    return globalThis.structuredClone(value);
+  }
+  return JSON.parse(JSON.stringify(value)) as T;
+}
 
 /**
  * Generate a pseudonymous UUIDv4. Prefers crypto.randomUUID, then a
@@ -189,6 +202,46 @@ export class ConsentManager extends EventTarget {
   /** Update the config (e.g. after language change). */
   updateConfig(config: Partial<KeksmeisterConfig>): void {
     Object.assign(this.config, config);
+  }
+
+  /**
+   * Build a snapshot of the banner configuration as currently shown to the
+   * visitor — categories, privacy URL, and (optionally) resolved translations.
+   * Pass the resolved translations explicitly when `config.lang` is a language
+   * code, so the snapshot captures the actual on-screen texts.
+   *
+   * The returned object is decoupled from the live config: callers that
+   * mutate `this.config.categories` or the resolved translations after the
+   * fact cannot retroactively change a snapshot that was already taken.
+   */
+  getConfigSnapshot(opts?: {
+    translations?: KeksmeisterTranslations;
+  }): ConsentConfigSnapshot {
+    const langValue = this.config.lang;
+    const snapshot: ConsentConfigSnapshot = {
+      revision: this.getRevision(),
+      capturedAt: new Date().toISOString(),
+      categories: deepClone(this.config.categories),
+      privacyUrl: this.config.privacyUrl,
+    };
+    if (this.config.imprintUrl !== undefined) {
+      snapshot.imprintUrl = this.config.imprintUrl;
+    }
+    if (typeof langValue === 'string') snapshot.lang = langValue;
+    const resolved =
+      opts?.translations ?? (typeof langValue === 'object' ? langValue : undefined);
+    if (resolved) snapshot.translations = deepClone(resolved);
+    return snapshot;
+  }
+
+  /**
+   * Upload a banner-config snapshot via the configured logger. Idempotent per
+   * revision via the logger's localStorage flag. No-op when no logger is
+   * configured.
+   */
+  sendConfigSnapshot(snapshot?: ConsentConfigSnapshot): void {
+    if (!this.logger) return;
+    this.logger.logSnapshot(snapshot ?? this.getConfigSnapshot());
   }
 
   // --- Private ---

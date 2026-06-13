@@ -83,6 +83,33 @@ The built-in logger is independent of `onConsent` — you can use both.
 | `includeUserAgent` | `false`                      | Attach `navigator.userAgent` to each sent record |
 | `queueKey`         | `keksmeister_consent_queue`  | `localStorage` key for the offline retry queue |
 | `maxQueueSize`     | `50`                         | Max records buffered while offline |
+| `snapshotEndpoint` | `${endpoint}/snapshot`       | URL that receives banner-config snapshots (see below) |
+| `snapshotSentKeyPrefix` | `keksmeister_snapshot_sent_` | `localStorage` key prefix for per-revision dedup |
+
+#### Banner-config snapshots (historical proof — DSK-OH Rn. 85)
+
+Recording *only* the revision string is not enough: a regulator needs to see the
+**actual texts and categories** the visitor saw at the time of consent. Keksmeister
+uploads a snapshot of the current banner configuration to `${endpoint}/snapshot`
+once per revision (deduped via `localStorage` and again server-side by content
+hash):
+
+```jsonc
+{
+  "revision": "2",
+  "capturedAt": "2026-06-13T14:00:00.000Z",
+  "categories": [/* id, label, description, services… */],
+  "privacyUrl": "https://example.com/privacy",
+  "imprintUrl": "https://example.com/imprint",
+  "lang": "de",
+  "translations": { "banner": { "acceptAll": "Alle akzeptieren", … }, … }
+}
+```
+
+The included server stores snapshots under `data/revisions/<revision>__<hash>.json`.
+Identical snapshots are written once; a new content hash means the banner texts
+or categories changed without a revision bump (operator bug — but the snapshot
+still gets recorded).
 
 #### Why it's reliable
 
@@ -125,6 +152,13 @@ ALLOWED_HOSTS="footage.one,*.footage.one"
 ```
 
 `*` (the default) allows any origin — fine for local testing, lock it down in prod.
+
+### Snapshot endpoint (`SNAPSHOT_PATH`)
+
+The server accepts banner-config snapshots at `${INGEST_PATH}/snapshot` by
+default. Override via `SNAPSHOT_PATH=/api/banner-snapshot`. Snapshots land under
+`data/revisions/` and are deduped on content hash, so re-uploads from many
+visitors collapse to one file per (revision, content) pair.
 
 ### Regulator export
 

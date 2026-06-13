@@ -208,4 +208,77 @@ describe('ConsentLogger', () => {
       expect(queued.map((r: ConsentRecord) => r.subjectId)).toEqual(['queued-2']);
     });
   });
+
+  describe('logSnapshot', () => {
+    const snapshot = {
+      revision: '2',
+      capturedAt: '2026-06-13T10:00:00.000Z',
+      categories: [{ id: 'analytics', label: 'Analytics' }],
+      privacyUrl: '/p',
+    };
+
+    it('POSTs the snapshot to `${endpoint}/snapshot` by default', async () => {
+      const fetchMock = vi.fn(async () => okResponse());
+      vi.stubGlobal('navigator', { onLine: true });
+      vi.stubGlobal('fetch', fetchMock);
+
+      new ConsentLogger({ endpoint: '/c', headers: { 'x-k': 'v' } }).logSnapshot(snapshot);
+
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+      expect(fetchMock.mock.calls[0]![0]).toBe('/c/snapshot');
+    });
+
+    it('honours an explicit snapshotEndpoint', async () => {
+      const fetchMock = vi.fn(async () => okResponse());
+      vi.stubGlobal('navigator', { onLine: true });
+      vi.stubGlobal('fetch', fetchMock);
+
+      new ConsentLogger({
+        endpoint: '/c',
+        snapshotEndpoint: '/snap',
+        headers: { 'x-k': 'v' },
+      }).logSnapshot(snapshot);
+
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+      expect(fetchMock.mock.calls[0]![0]).toBe('/snap');
+    });
+
+    it('skips later sends for the same revision after a success', async () => {
+      const fetchMock = vi.fn(async () => okResponse());
+      vi.stubGlobal('navigator', { onLine: true });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const logger = new ConsentLogger({
+        endpoint: '/c',
+        headers: { 'x-k': 'v' }, // force fetch transport so we can await
+      });
+      logger.logSnapshot(snapshot);
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+      logger.logSnapshot(snapshot);
+      logger.logSnapshot({ ...snapshot, capturedAt: 'later' });
+
+      // No further calls for the same revision.
+      await Promise.resolve();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not set the dedup flag when the upload fails', async () => {
+      const fetchMock = vi.fn(async () => failResponse());
+      vi.stubGlobal('navigator', { onLine: true });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const logger = new ConsentLogger({ endpoint: '/c', headers: { 'x-k': 'v' } });
+      logger.logSnapshot(snapshot);
+      // Wait until both the fetch and the .then(ok => clear-in-flight) settle.
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+      await new Promise((r) => setTimeout(r, 0));
+
+      // Next call must retry — server hasn't acknowledged yet.
+      const fetchOk = vi.fn(async () => okResponse());
+      vi.stubGlobal('fetch', fetchOk);
+      logger.logSnapshot(snapshot);
+      await vi.waitFor(() => expect(fetchOk).toHaveBeenCalledTimes(1));
+    });
+  });
 });
