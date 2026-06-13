@@ -7,9 +7,12 @@
  * into time-based sub-directories so no single directory grows without bound.
  */
 
+import { createHash } from 'node:crypto';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { PartitionGranularity } from './config.ts';
+
+const REVISIONS_DIR = 'revisions';
 
 export interface StoredEnvelope {
   /** Server-assigned unique id for this log entry (also used in the filename). */
@@ -63,4 +66,53 @@ export async function writeEnvelope(
   const path = join(dir, entryFilename(now, envelope.id));
   await Bun.write(path, JSON.stringify(envelope, null, 2));
   return path;
+}
+
+/**
+ * Replace any character that isn't safe in a path segment. Keeps letters,
+ * digits, dot, dash and underscore; collapses everything else to `-`. Strips
+ * leading dots so a malicious revision string can't produce `.` / `..`
+ * filenames.
+ */
+function safeRevisionSegment(revision: string): string {
+  const cleaned = revision
+    .replace(/[^A-Za-z0-9._-]+/g, '-')
+    .replace(/^\.+/, '')
+    .slice(0, 64);
+  return cleaned || 'revision';
+}
+
+/**
+ * Persist a banner-config snapshot under `${dataDir}/revisions/`. Idempotent:
+ * the filename embeds a content hash, so identical snapshots overwrite
+ * themselves rather than accumulating. Returns the path and whether the file
+ * already existed.
+ */
+export async function writeSnapshot(
+  dataDir: string,
+  snapshot: unknown
+): Promise<{ path: string; existed: boolean }> {
+  const revision =
+    snapshot && typeof snapshot === 'object' && 'revision' in snapshot
+      ? String((snapshot as { revision: unknown }).revision)
+      : 'unknown';
+
+  // Hash the snapshot body without `capturedAt`, which changes per page load
+  // but does not signal a real config change.
+  const fingerprint = { ...(snapshot as Record<string, unknown>) };
+  delete fingerprint.capturedAt;
+  const hash = createHash('sha256')
+    .update(JSON.stringify(fingerprint))
+    .digest('hex')
+    .slice(0, 16);
+
+  const dir = join(dataDir, REVISIONS_DIR);
+  await mkdir(dir, { recursive: true });
+  const path = join(dir, `${safeRevisionSegment(revision)}__${hash}.json`);
+
+  const existed = await Bun.file(path).exists();
+  if (!existed) {
+    await Bun.write(path, JSON.stringify(snapshot, null, 2));
+  }
+  return { path, existed };
 }

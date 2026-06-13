@@ -474,4 +474,65 @@ describe('ConsentManager', () => {
       vi.unstubAllGlobals();
     });
   });
+
+  describe('config snapshots', () => {
+    it('getConfigSnapshot returns the current revision, categories and URLs', () => {
+      const manager = new ConsentManager(
+        createConfig({
+          revision: '4',
+          privacyUrl: '/p',
+          imprintUrl: '/i',
+          lang: 'de',
+        })
+      );
+      const snap = manager.getConfigSnapshot();
+      expect(snap.revision).toBe('4');
+      expect(snap.privacyUrl).toBe('/p');
+      expect(snap.imprintUrl).toBe('/i');
+      expect(snap.lang).toBe('de');
+      expect(snap.categories.map((c) => c.id)).toEqual([
+        'essential',
+        'analytics',
+        'marketing',
+      ]);
+      expect(typeof snap.capturedAt).toBe('string');
+    });
+
+    it('includes explicitly passed translations even when lang is a string', () => {
+      const manager = new ConsentManager(createConfig({ lang: 'de' }));
+      const t = {
+        banner: { description: 'X', acceptAll: 'Y', rejectAll: 'Z', settings: 'S' },
+        modal: { title: 'M', save: 'OK', acceptAll: 'A', rejectAll: 'R' },
+      };
+      const snap = manager.getConfigSnapshot({ translations: t });
+      expect(snap.translations?.banner.acceptAll).toBe('Y');
+    });
+
+    it('sendConfigSnapshot fires the snapshot to the snapshot endpoint', async () => {
+      const fetchMock = vi.fn(async () => ({ ok: true }) as Response);
+      vi.stubGlobal('navigator', { onLine: true });
+      vi.stubGlobal('fetch', fetchMock);
+      localStorage.clear();
+
+      const manager = new ConsentManager(
+        createConfig({
+          revision: '7',
+          logging: { endpoint: '/c', headers: { 'x-k': 'v' } },
+        })
+      );
+      manager.sendConfigSnapshot();
+
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+      expect(fetchMock.mock.calls[0]![0]).toBe('/c/snapshot');
+      const body = JSON.parse(fetchMock.mock.calls[0]![1]!.body as string);
+      expect(body.revision).toBe('7');
+
+      vi.unstubAllGlobals();
+    });
+
+    it('sendConfigSnapshot is a no-op without a logger', () => {
+      const manager = new ConsentManager(createConfig());
+      expect(() => manager.sendConfigSnapshot()).not.toThrow();
+    });
+  });
 });

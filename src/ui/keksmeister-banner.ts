@@ -116,6 +116,12 @@ export class KeksmeisterBanner extends HTMLElement {
     this.blocker = new ScriptBlocker(this._manager);
     this.blocker.start();
 
+    // Send the banner-config snapshot once per revision so the actually-rendered
+    // texts (after i18n resolution) end up in the audit log (DSK-OH Rn. 85).
+    this._manager.sendConfigSnapshot(
+      this._manager.getConfigSnapshot({ translations: this.translations })
+    );
+
     this._view = this._manager.shouldShowBanner ? 'banner' : 'hidden';
     this.render();
   }

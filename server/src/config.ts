@@ -16,6 +16,13 @@ export interface Config {
   /** Path that accepts consent POSTs (INGEST_PATH, default /consent). */
   ingestPath: string;
   /**
+   * Path that accepts banner-config snapshot POSTs (SNAPSHOT_PATH,
+   * default `${INGEST_PATH}/snapshot`). Snapshots are stored idempotently
+   * under `${dataDir}/revisions/` and provide the historical banner texts
+   * required by DSK-OH Rn. 85.
+   */
+  snapshotPath: string;
+  /**
    * Allowed CORS hosts (ALLOWED_HOSTS, comma-separated, default "*").
    *
    * Entries are bare hostnames without a scheme — both http and https origins
@@ -72,11 +79,15 @@ export function loadConfig(
   let ingestPath = env.INGEST_PATH ?? '/consent';
   if (!ingestPath.startsWith('/')) ingestPath = `/${ingestPath}`;
 
+  let snapshotPath = env.SNAPSHOT_PATH ?? `${ingestPath}/snapshot`;
+  if (!snapshotPath.startsWith('/')) snapshotPath = `/${snapshotPath}`;
+
   return {
     port: positiveInt(env.PORT, 8787),
     host: env.HOST ?? '0.0.0.0',
     dataDir: env.DATA_DIR ?? './data',
     ingestPath,
+    snapshotPath,
     allowedHosts: hosts.length > 0 ? hosts : ['*'],
     maxBodyBytes: positiveInt(env.MAX_BODY_BYTES, 16 * 1024),
     partition: env.PARTITION === 'day' ? 'day' : 'hour',

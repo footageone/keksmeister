@@ -84,6 +84,13 @@ export interface ConsentLoggerOptions {
   /** URL that receives consent records via HTTP POST (`application/json`). */
   endpoint: string;
   /**
+   * URL that receives banner-config snapshots via HTTP POST. Defaults to
+   * `${endpoint}/snapshot`. Used to fulfil DSK-OH Rn. 85: archive the historical
+   * banner texts and category definitions that were active when the user
+   * consented, so a regulator can reconstruct what was shown.
+   */
+  snapshotEndpoint?: string;
+  /**
    * Transport strategy:
    * - `auto` (default): prefer `sendBeacon`, fall back to `fetch`
    * - `beacon`: only `sendBeacon` (with `fetch` fallback if it returns false)
@@ -101,6 +108,34 @@ export interface ConsentLoggerOptions {
   queueKey?: string;
   /** Max number of records kept in the offline queue. Default: 50. */
   maxQueueSize?: number;
+  /**
+   * localStorage key prefix for tracking which revisions have already had
+   * their snapshot uploaded. Default: `keksmeister_snapshot_sent_`.
+   */
+  snapshotSentKeyPrefix?: string;
+}
+
+/**
+ * Frozen-in-time view of the banner configuration that was active when a
+ * visitor consented. Sent to the audit server independently of consent
+ * records so historical banner texts and categories remain reconstructible
+ * after the live configuration changes (DSK-OH Rn. 85).
+ */
+export interface ConsentConfigSnapshot {
+  /** Configuration revision the snapshot belongs to. */
+  revision: string;
+  /** ISO 8601 timestamp the snapshot was generated. */
+  capturedAt: string;
+  /** Full category list including labels, descriptions, services. */
+  categories: ConsentCategory[];
+  /** Privacy policy URL shown to the visitor. */
+  privacyUrl: string;
+  /** Optional imprint URL. */
+  imprintUrl?: string;
+  /** Language code, when the banner used a built-in translation. */
+  lang?: string;
+  /** Resolved banner/modal texts as actually rendered to the visitor. */
+  translations?: KeksmeisterTranslations;
 }
 
 /**

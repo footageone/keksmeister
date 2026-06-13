@@ -16,6 +16,7 @@ export { KeksmeisterTrigger } from './ui/index.js';
 export type {
   ConsentCategory,
   ConsentChoices,
+  ConsentConfigSnapshot,
   ConsentLoggerOptions,
   ConsentRecord,
   ConsentService,

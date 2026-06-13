@@ -7,6 +7,7 @@ export type { ServiceAdapter } from './service-adapter.js';
 export type {
   ConsentCategory,
   ConsentChoices,
+  ConsentConfigSnapshot,
   ConsentLoggerOptions,
   ConsentRecord,
   ConsentService,

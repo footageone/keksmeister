@@ -7,7 +7,7 @@
 
 import { createHash, randomUUID } from 'node:crypto';
 import type { Config } from './config.ts';
-import { writeEnvelope, type StoredEnvelope } from './store.ts';
+import { writeEnvelope, writeSnapshot, type StoredEnvelope } from './store.ts';
 
 const JSON_HEADERS = { 'content-type': 'application/json' } as const;
 
@@ -144,6 +144,42 @@ export function createHandler(config: Config) {
       }
 
       return json({ id: envelope.id }, 201, cors);
+    }
+
+    // Banner-config snapshot ingest (DSK-OH Rn. 85)
+    if (req.method === 'POST' && url.pathname === config.snapshotPath) {
+      const declared = Number(req.headers.get('content-length') ?? '0');
+      if (Number.isFinite(declared) && declared > config.maxBodyBytes) {
+        return json({ error: 'payload too large' }, 413, cors);
+      }
+
+      const text = await req.text();
+      if (Buffer.byteLength(text, 'utf8') > config.maxBodyBytes) {
+        return json({ error: 'payload too large' }, 413, cors);
+      }
+
+      let snapshot: unknown;
+      try {
+        snapshot = JSON.parse(text);
+      } catch {
+        return json({ error: 'invalid json' }, 400, cors);
+      }
+
+      if (
+        snapshot === null ||
+        typeof snapshot !== 'object' ||
+        Array.isArray(snapshot)
+      ) {
+        return json({ error: 'expected a snapshot object' }, 400, cors);
+      }
+
+      try {
+        const { existed } = await writeSnapshot(config.dataDir, snapshot);
+        return json({ status: existed ? 'duplicate' : 'stored' }, 201, cors);
+      } catch (err) {
+        console.error('[consent-log] snapshot write failed:', err);
+        return json({ error: 'storage error' }, 500, cors);
+      }
     }
 
     return json({ error: 'not found' }, 404, cors);

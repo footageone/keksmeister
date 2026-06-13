@@ -1,7 +1,12 @@
-import type { ConsentLoggerOptions, ConsentRecord } from './types.js';
+import type {
+  ConsentConfigSnapshot,
+  ConsentLoggerOptions,
+  ConsentRecord,
+} from './types.js';
 
 const DEFAULT_QUEUE_KEY = 'keksmeister_consent_queue';
 const DEFAULT_MAX_QUEUE = 50;
+const DEFAULT_SNAPSHOT_SENT_KEY_PREFIX = 'keksmeister_snapshot_sent_';
 
 /**
  * Reliable, fire-and-forget transport for consent records.
@@ -18,19 +23,26 @@ const DEFAULT_MAX_QUEUE = 50;
  */
 export class ConsentLogger {
   private readonly endpoint: string;
+  private readonly snapshotEndpoint: string;
   private readonly transport: 'auto' | 'beacon' | 'fetch';
   private readonly headers: Record<string, string>;
   private readonly includeUserAgent: boolean;
   private readonly queueKey: string;
   private readonly maxQueueSize: number;
+  private readonly snapshotSentKeyPrefix: string;
+  /** Revisions whose snapshot upload is in-flight or already acknowledged. */
+  private readonly snapshotInFlight = new Set<string>();
 
   constructor(options: ConsentLoggerOptions) {
     this.endpoint = options.endpoint;
+    this.snapshotEndpoint = options.snapshotEndpoint ?? `${options.endpoint}/snapshot`;
     this.transport = options.transport ?? 'auto';
     this.headers = options.headers ?? {};
     this.includeUserAgent = options.includeUserAgent ?? false;
     this.queueKey = options.queueKey ?? DEFAULT_QUEUE_KEY;
     this.maxQueueSize = options.maxQueueSize ?? DEFAULT_MAX_QUEUE;
+    this.snapshotSentKeyPrefix =
+      options.snapshotSentKeyPrefix ?? DEFAULT_SNAPSHOT_SENT_KEY_PREFIX;
 
     // Drain anything left over from a previous session.
     void this.flush();
@@ -44,6 +56,37 @@ export class ConsentLogger {
         void this.flush();
       } else {
         this.enqueue(payload);
+      }
+    });
+  }
+
+  /**
+   * Upload a banner-config snapshot. Idempotent per revision: the first
+   * successful upload for a given revision sets a localStorage flag, and later
+   * calls for the same revision become no-ops until the flag is cleared. The
+   * server should additionally dedupe on content hash (DSK-OH Rn. 85).
+   */
+  logSnapshot(snapshot: ConsentConfigSnapshot): void {
+    if (this.snapshotInFlight.has(snapshot.revision)) return;
+    const key = `${this.snapshotSentKeyPrefix}${snapshot.revision}`;
+    try {
+      if (globalThis.localStorage?.getItem(key)) return;
+    } catch {
+      /* storage unavailable — fall through and just send */
+    }
+    // Reserve the slot synchronously so concurrent calls dedupe even before the
+    // network round-trip completes.
+    this.snapshotInFlight.add(snapshot.revision);
+    void this.dispatchTo(this.snapshotEndpoint, snapshot).then((ok) => {
+      if (ok) {
+        try {
+          globalThis.localStorage?.setItem(key, '1');
+        } catch {
+          /* best effort */
+        }
+      } else {
+        // Allow a retry on the next call.
+        this.snapshotInFlight.delete(snapshot.revision);
       }
     });
   }
@@ -77,7 +120,11 @@ export class ConsentLogger {
     return record;
   }
 
-  private async dispatch(payload: ConsentRecord): Promise<boolean> {
+  private dispatch(payload: ConsentRecord): Promise<boolean> {
+    return this.dispatchTo(this.endpoint, payload);
+  }
+
+  private async dispatchTo(url: string, payload: unknown): Promise<boolean> {
     const canBeacon =
       typeof globalThis.navigator?.sendBeacon === 'function' &&
       Object.keys(this.headers).length === 0;
@@ -85,27 +132,31 @@ export class ConsentLogger {
     // Beacon is only viable without custom headers (beacons can't set them), so
     // gate it for both 'beacon' and 'auto'. With headers, we always use fetch.
     if ((this.transport === 'beacon' || this.transport === 'auto') && canBeacon) {
-      if (this.sendBeacon(payload)) return true;
+      if (this.sendBeacon(url, payload)) return true;
       // Beacon refused the payload — fall through to fetch.
     }
-    return this.dispatchFetch(payload);
+    return this.dispatchFetchTo(url, payload);
   }
 
-  private sendBeacon(payload: ConsentRecord): boolean {
+  private sendBeacon(url: string, payload: unknown): boolean {
     try {
       const blob = new Blob([JSON.stringify(payload)], {
         type: 'application/json',
       });
-      return globalThis.navigator.sendBeacon(this.endpoint, blob);
+      return globalThis.navigator.sendBeacon(url, blob);
     } catch {
       return false;
     }
   }
 
-  private async dispatchFetch(payload: ConsentRecord): Promise<boolean> {
+  private dispatchFetch(payload: ConsentRecord): Promise<boolean> {
+    return this.dispatchFetchTo(this.endpoint, payload);
+  }
+
+  private async dispatchFetchTo(url: string, payload: unknown): Promise<boolean> {
     if (typeof globalThis.fetch !== 'function') return false;
     try {
-      const res = await globalThis.fetch(this.endpoint, {
+      const res = await globalThis.fetch(url, {
         method: 'POST',
         headers: this.buildFetchHeaders(),
         body: JSON.stringify(payload),

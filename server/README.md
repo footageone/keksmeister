@@ -74,7 +74,8 @@ All via environment variables — every one has a default:
 | `PORT`            | `8787`      | Listen port |
 | `HOST`            | `0.0.0.0`   | Bind address |
 | `DATA_DIR`        | `./data`    | Where log files are written |
-| `INGEST_PATH`     | `/consent`  | Path that accepts `POST`s |
+| `INGEST_PATH`     | `/consent`  | Path that accepts consent record `POST`s |
+| `SNAPSHOT_PATH`   | `${INGEST_PATH}/snapshot` | Path that accepts banner-config snapshots (stored idempotently in `data/revisions/`) |
 | `ALLOWED_HOSTS`   | `*`         | Comma-separated CORS allow-list of **bare hostnames** (no scheme; http + https both match). Supports a leading `*.` for subdomains, e.g. `footage.one,*.footage.one`. `*` allows any origin. |
 | `MAX_BODY_BYTES`  | `16384`     | Reject larger request bodies |
 | `PARTITION`       | `hour`      | Directory bucket size: `hour` or `day` |
