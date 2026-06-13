@@ -82,20 +82,30 @@ All via environment variables — every one has a default:
 
 ## Wire it to the banner
 
-The library already exposes an `onConsent` callback. Point it at this server and
-use `sendBeacon` so the record survives the page navigation after "Accept all":
+Use Keksmeister's built-in `logging` option — it sends every decision (grant,
+update **and** revoke) via `sendBeacon` with an offline retry queue, so records
+survive the navigation after "Accept all":
 
 ```js
 banner.config = {
   // ...categories, privacyUrl, revision...
-  onConsent: (record) => {
-    const url = 'https://consent.example.com/consent';
-    const body = JSON.stringify(record);
-    if (!navigator.sendBeacon(url, new Blob([body], { type: 'application/json' }))) {
-      fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body, keepalive: true });
-    }
+  logging: {
+    endpoint: 'https://consent.example.com/consent',
   },
 };
+```
+
+Prefer to own the transport yourself? The `onConsent` callback still works
+(grant/update only):
+
+```js
+onConsent: (record) => {
+  const url = 'https://consent.example.com/consent';
+  const body = JSON.stringify(record);
+  if (!navigator.sendBeacon(url, new Blob([body], { type: 'application/json' }))) {
+    fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body, keepalive: true });
+  }
+},
 ```
 
 > Set `ALLOWED_ORIGINS` to your site's origin so only your pages can post.

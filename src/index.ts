@@ -1,6 +1,8 @@
 // Core (headless, no UI)
 export {
   ConsentManager,
+  ConsentLogger,
+  createConsentLogger,
   CookieStore,
   ScriptBlocker,
   ServiceRegistry,
@@ -14,6 +16,7 @@ export { KeksmeisterTrigger } from './ui/index.js';
 export type {
   ConsentCategory,
   ConsentChoices,
+  ConsentLoggerOptions,
   ConsentRecord,
   ConsentService,
   KeksmeisterConfig,

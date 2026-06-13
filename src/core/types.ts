@@ -46,8 +46,61 @@ export interface ConsentRecord {
   revision: string;
   /** The actual choices */
   choices: ConsentChoices;
-  /** How consent was given */
-  method: 'accept-all' | 'reject-all' | 'custom';
+  /** How the decision was made (or 'revoke' for a withdrawal) */
+  method: 'accept-all' | 'reject-all' | 'custom' | 'revoke';
+  /**
+   * High-level action this record represents:
+   * - `grant`: the visitor's first consent decision
+   * - `update`: consent changed after a prior decision
+   * - `revoke`: consent fully withdrawn
+   *
+   * Set automatically by {@link ConsentManager}.
+   */
+  action?: 'grant' | 'update' | 'revoke';
+  /**
+   * Pseudonymous, stable per-browser identifier, persisted in the consent
+   * cookie. Ties multiple consent decisions of the same visitor together for
+   * audit proof — without storing any personal data. Generated automatically.
+   */
+  subjectId?: string;
+  /**
+   * Optional user-agent string. Only attached to records sent via the built-in
+   * consent logger when `logging.includeUserAgent` is enabled — never stored in
+   * the cookie.
+   */
+  userAgent?: string;
+}
+
+/**
+ * Options for the built-in server-side consent logger.
+ *
+ * When configured (via `KeksmeisterConfig.logging`), every consent decision
+ * (grant, update, revoke) is POSTed to `endpoint` as JSON. Delivery prefers
+ * `navigator.sendBeacon` so it survives the page navigation after "Accept all",
+ * and falls back to `fetch(..., { keepalive: true })`. Failed sends are buffered
+ * in `localStorage` and retried on the next page load.
+ */
+export interface ConsentLoggerOptions {
+  /** URL that receives consent records via HTTP POST (`application/json`). */
+  endpoint: string;
+  /**
+   * Transport strategy:
+   * - `auto` (default): prefer `sendBeacon`, fall back to `fetch`
+   * - `beacon`: only `sendBeacon` (with `fetch` fallback if it returns false)
+   * - `fetch`: always `fetch`
+   *
+   * Note: `sendBeacon` cannot set custom headers — if `headers` are given,
+   * `fetch` is always used.
+   */
+  transport?: 'auto' | 'beacon' | 'fetch';
+  /** Extra headers, applied to the `fetch` transport only. */
+  headers?: Record<string, string>;
+  /** Attach `navigator.userAgent` to each sent record. Default: false. */
+  includeUserAgent?: boolean;
+  /** localStorage key for the offline retry queue. Default: `keksmeister_consent_queue`. */
+  queueKey?: string;
+  /** Max number of records kept in the offline queue. Default: 50. */
+  maxQueueSize?: number;
 }
 
 /**
@@ -100,6 +153,13 @@ export interface KeksmeisterConfig {
   cookieDomain?: string;
   /** Called when the user gives or updates consent */
   onConsent?: (record: ConsentRecord) => void;
+  /**
+   * Enable the built-in server-side consent logger. Every consent decision
+   * (grant, update, and revoke) is POSTed to the configured endpoint, with an
+   * offline retry queue. Independent of `onConsent` — and, unlike `onConsent`,
+   * it also fires on revocation, so withdrawals are part of the audit trail.
+   */
+  logging?: ConsentLoggerOptions;
   /** Called when consent is revoked for a specific category */
   onRevoke?: (categoryId: string) => void;
   /** If true, auto-clear cookies of declined services (default: true) */

@@ -127,6 +127,36 @@ banner.config = {
 };
 ```
 
+### Server-side consent logging (proof / Nachweispflicht)
+
+DSGVO / TDDDG require you to **prove** consent. Every `ConsentRecord` carries the
+fields you need for that: a `timestamp`, the banner `revision`, the `choices`, the
+`method`, an `action` (`grant` / `update` / `revoke`) and a pseudonymous,
+cookie-persisted `subjectId` that ties a visitor's decisions together without
+storing any personal data.
+
+You can ship records to your backend in two ways:
+
+1. **`onConsent` callback** — full control, you own the transport (fires on grant/update).
+2. **Built-in logger** (`logging`) — set an endpoint and Keksmeister sends every
+   decision **including revocations** via `navigator.sendBeacon` (so it survives the
+   navigation after "Accept all"), with a `localStorage` retry queue for offline/failed
+   sends:
+
+```js
+banner.config = {
+  // ...categories, privacyUrl, revision...
+  logging: {
+    endpoint: 'https://consent.example.com/consent',
+    includeUserAgent: false, // opt-in; raw IP is never sent by the library
+  },
+};
+```
+
+A ready-to-run, database-free endpoint for this is included in
+[`server/`](server/README.md) (Bun + Docker; stores each record as a plain JSON
+file, ZIP the folder for a regulator export).
+
 ### Script Blocking
 
 For third-party scripts loaded via `<script>` tags:
@@ -317,7 +347,7 @@ src/
 - **Shadow DOM** — Guarantees style encapsulation. The banner looks the same in every host application.
 - **CSS Custom Properties** — The only styling API that crosses the Shadow DOM boundary. All visual aspects are customizable without `::part()` or `::slotted()`.
 - **Core/UI split** — The consent engine (`ConsentManager`) is usable headless. Build your own UI if needed.
-- **No built-in server/database** — Unlike c15t, we believe consent proof logging belongs in your existing backend. A simple `onConsent` callback keeps the library focused.
+- **Logging belongs in your backend** — Consent proof logging lives in your infrastructure via the `onConsent` callback or the built-in `logging` transport. We keep the library focused but ship an optional, database-free logging server in [`server/`](server/README.md) for those who want a turnkey option.
 - **`data-keksmeister` attribute** — Simple, declarative script blocking inspired by Klaro's `data-name` approach.
 - **Two consent mechanisms** — Script blocking for `<script>` tags, service adapters for programmatic APIs (PostHog, GA4, etc.). Most real-world setups need both.
 - **Adapter pattern** — A simple `{ onConsent, onRevoke }` interface. Built-in adapters for 9 popular services, easy to extend with custom adapters. Tools without a consent API (Hotjar, Clarity, etc.) should use script blocking instead.

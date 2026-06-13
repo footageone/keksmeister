@@ -1,3 +1,4 @@
+import { ConsentLogger } from './consent-logger.js';
 import { CookieStore } from './cookie-store.js';
 import type {
   ConsentCategory,
@@ -5,6 +6,17 @@ import type {
   ConsentRecord,
   KeksmeisterConfig,
 } from './types.js';
+
+/** Generate a pseudonymous id, preferring crypto.randomUUID with a fallback. */
+function generateId(): string {
+  const c = globalThis.crypto;
+  if (c && typeof c.randomUUID === 'function') return c.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (ch) => {
+    const r = Math.floor(Math.random() * 16);
+    const v = ch === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
 
 /**
  * Core consent state manager.
@@ -22,6 +34,8 @@ export class ConsentManager extends EventTarget {
   private store: CookieStore;
   private choices: ConsentChoices = {};
   private _hasConsented = false;
+  private subjectId: string | undefined;
+  private logger: ConsentLogger | undefined;
 
   constructor(config: KeksmeisterConfig) {
     super();
@@ -31,6 +45,9 @@ export class ConsentManager extends EventTarget {
       cookieLifetimeDays: config.cookieLifetimeDays,
       cookieDomain: config.cookieDomain,
     });
+    if (config.logging) {
+      this.logger = new ConsentLogger(config.logging);
+    }
     this.restore();
   }
 
@@ -120,9 +137,28 @@ export class ConsentManager extends EventTarget {
 
   /** Programmatically revoke consent and clear the cookie. */
   revokeAll(): void {
+    const choices: ConsentChoices = {};
+    for (const cat of this.config.categories) {
+      choices[cat.id] = cat.required === true;
+    }
+
+    const record: ConsentRecord = {
+      timestamp: new Date().toISOString(),
+      revision: this.getRevision(),
+      choices,
+      method: 'revoke',
+      action: 'revoke',
+      subjectId: this.subjectId ?? generateId(),
+    };
+
+    // Log the withdrawal as part of the audit trail before clearing state.
+    this.logger?.log(record);
+
     this.choices = {};
     this._hasConsented = false;
+    this.subjectId = undefined;
     this.store.clear();
+
     this.dispatch('keksmeister:revoke', { categoryId: '*' });
   }
 
@@ -140,7 +176,11 @@ export class ConsentManager extends EventTarget {
 
   private restore(): void {
     const record = this.store.read();
-    if (record && record.revision === this.getRevision()) {
+    if (!record) return;
+    // Recover the pseudonymous id even across a revision bump, so re-consent on
+    // the same browser stays tied to the same subject in the audit trail.
+    this.subjectId = record.subjectId;
+    if (record.revision === this.getRevision()) {
       this.choices = record.choices;
       this._hasConsented = true;
     }
@@ -151,14 +191,18 @@ export class ConsentManager extends EventTarget {
     method: ConsentRecord['method']
   ): void {
     const previousChoices = { ...this.choices };
+    const action: ConsentRecord['action'] = this._hasConsented ? 'update' : 'grant';
     this.choices = choices;
     this._hasConsented = true;
+    this.subjectId ??= generateId();
 
     const record: ConsentRecord = {
       timestamp: new Date().toISOString(),
       revision: this.getRevision(),
       choices,
       method,
+      action,
+      subjectId: this.subjectId,
     };
 
     this.store.write(record);
@@ -170,6 +214,9 @@ export class ConsentManager extends EventTarget {
 
     // Fire callback
     this.config.onConsent?.(record);
+
+    // Server-side logging (grant/update)
+    this.logger?.log(record);
 
     // Dispatch DOM event
     this.dispatch('keksmeister:consent', record);
@@ -227,6 +274,7 @@ export class ConsentManager extends EventTarget {
       event: 'keksmeister_consent',
       keksmeister: {
         method: record.method,
+        action: record.action,
         revision: record.revision,
         ...record.choices,
       },
