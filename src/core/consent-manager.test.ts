@@ -508,6 +508,26 @@ describe('ConsentManager', () => {
       expect(snap.translations?.banner.acceptAll).toBe('Y');
     });
 
+    it('returns a snapshot decoupled from the live config and translations', () => {
+      const categories = [
+        { id: 'essential', label: 'Essential', required: true },
+        { id: 'analytics', label: 'Analytics' },
+      ];
+      const t = {
+        banner: { description: 'X', acceptAll: 'Y', rejectAll: 'Z', settings: 'S' },
+        modal: { title: 'M', save: 'OK', acceptAll: 'A', rejectAll: 'R' },
+      };
+      const manager = new ConsentManager(createConfig({ categories }));
+      const snap = manager.getConfigSnapshot({ translations: t });
+
+      // Mutate after the snapshot — the snapshot must not change.
+      categories[1]!.label = 'Telemetry';
+      t.banner.acceptAll = 'CHANGED';
+
+      expect(snap.categories[1]!.label).toBe('Analytics');
+      expect(snap.translations?.banner.acceptAll).toBe('Y');
+    });
+
     it('sendConfigSnapshot fires the snapshot to the snapshot endpoint', async () => {
       const fetchMock = vi.fn(async () => ({ ok: true }) as Response);
       vi.stubGlobal('navigator', { onLine: true });

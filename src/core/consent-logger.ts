@@ -65,6 +65,10 @@ export class ConsentLogger {
    * successful upload for a given revision sets a localStorage flag, and later
    * calls for the same revision become no-ops until the flag is cleared. The
    * server should additionally dedupe on content hash (DSK-OH Rn. 85).
+   *
+   * Uses fetch only (not sendBeacon) because beacon's boolean return reflects
+   * queueing, not delivery — we cannot set the per-revision dedup flag on a
+   * value that doesn't represent an actual HTTP acknowledgement.
    */
   logSnapshot(snapshot: ConsentConfigSnapshot): void {
     if (this.snapshotInFlight.has(snapshot.revision)) return;
@@ -77,7 +81,7 @@ export class ConsentLogger {
     // Reserve the slot synchronously so concurrent calls dedupe even before the
     // network round-trip completes.
     this.snapshotInFlight.add(snapshot.revision);
-    void this.dispatchTo(this.snapshotEndpoint, snapshot).then((ok) => {
+    void this.dispatchFetchTo(this.snapshotEndpoint, snapshot).then((ok) => {
       if (ok) {
         try {
           globalThis.localStorage?.setItem(key, '1');

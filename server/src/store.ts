@@ -84,22 +84,27 @@ function safeRevisionSegment(revision: string): string {
 
 /**
  * Persist a banner-config snapshot under `${dataDir}/revisions/`. Idempotent:
- * the filename embeds a content hash, so identical snapshots overwrite
- * themselves rather than accumulating. Returns the path and whether the file
- * already existed.
+ * the filename embeds a content hash, so a re-upload of an identical snapshot
+ * is detected and skipped rather than overwriting the file on disk. Returns
+ * the path and whether the file already existed.
+ *
+ * Non-object inputs (null, arrays, primitives) are rejected with a TypeError
+ * — the server route also validates this, but the helper stays honest if
+ * called from elsewhere.
  */
 export async function writeSnapshot(
   dataDir: string,
   snapshot: unknown
 ): Promise<{ path: string; existed: boolean }> {
-  const revision =
-    snapshot && typeof snapshot === 'object' && 'revision' in snapshot
-      ? String((snapshot as { revision: unknown }).revision)
-      : 'unknown';
+  if (snapshot === null || typeof snapshot !== 'object' || Array.isArray(snapshot)) {
+    throw new TypeError('writeSnapshot: snapshot must be a non-null object');
+  }
+  const obj = snapshot as Record<string, unknown>;
+  const revision = 'revision' in obj ? String(obj.revision) : 'unknown';
 
   // Hash the snapshot body without `capturedAt`, which changes per page load
   // but does not signal a real config change.
-  const fingerprint = { ...(snapshot as Record<string, unknown>) };
+  const fingerprint = { ...obj };
   delete fingerprint.capturedAt;
   const hash = createHash('sha256')
     .update(JSON.stringify(fingerprint))

@@ -10,6 +10,17 @@ import type {
 } from './types.js';
 
 /**
+ * Decouple snapshot data from its source. structuredClone is the standard
+ * deep clone; the JSON fallback covers older runtimes (and the test sandbox).
+ */
+function deepClone<T>(value: T): T {
+  if (typeof globalThis.structuredClone === 'function') {
+    return globalThis.structuredClone(value);
+  }
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+/**
  * Generate a pseudonymous UUIDv4. Prefers crypto.randomUUID, then a
  * crypto.getRandomValues-based v4, and only falls back to Math.random in
  * environments without Web Crypto (rare, non-secure contexts).
@@ -198,6 +209,10 @@ export class ConsentManager extends EventTarget {
    * visitor — categories, privacy URL, and (optionally) resolved translations.
    * Pass the resolved translations explicitly when `config.lang` is a language
    * code, so the snapshot captures the actual on-screen texts.
+   *
+   * The returned object is decoupled from the live config: callers that
+   * mutate `this.config.categories` or the resolved translations after the
+   * fact cannot retroactively change a snapshot that was already taken.
    */
   getConfigSnapshot(opts?: {
     translations?: KeksmeisterTranslations;
@@ -206,7 +221,7 @@ export class ConsentManager extends EventTarget {
     const snapshot: ConsentConfigSnapshot = {
       revision: this.getRevision(),
       capturedAt: new Date().toISOString(),
-      categories: this.config.categories,
+      categories: deepClone(this.config.categories),
       privacyUrl: this.config.privacyUrl,
     };
     if (this.config.imprintUrl !== undefined) {
@@ -215,7 +230,7 @@ export class ConsentManager extends EventTarget {
     if (typeof langValue === 'string') snapshot.lang = langValue;
     const resolved =
       opts?.translations ?? (typeof langValue === 'object' ? langValue : undefined);
-    if (resolved) snapshot.translations = resolved;
+    if (resolved) snapshot.translations = deepClone(resolved);
     return snapshot;
   }
 

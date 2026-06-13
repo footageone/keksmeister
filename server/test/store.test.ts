@@ -145,4 +145,15 @@ describe('writeSnapshot', () => {
       await rm(dir, { recursive: true, force: true });
     }
   });
+
+  test('rejects null, arrays and primitives with a TypeError', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'consent-snap-'));
+    try {
+      await expect(writeSnapshot(dir, null)).rejects.toBeInstanceOf(TypeError);
+      await expect(writeSnapshot(dir, [])).rejects.toBeInstanceOf(TypeError);
+      await expect(writeSnapshot(dir, 'oops')).rejects.toBeInstanceOf(TypeError);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
 });
