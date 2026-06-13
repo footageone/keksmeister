@@ -160,12 +160,14 @@ docker compose up -d
 ### Releasing a new image
 
 The image is published by the
-[`publish-server.yml`](../.github/workflows/publish-server.yml) workflow. Push a
-tag of the form `server-vX.Y.Z` to release that version (also updates `latest`):
+[`publish-server.yml`](../.github/workflows/publish-server.yml) workflow on every
+**GitHub release** — the same trigger as the npm package — so one release ships
+both. The release tag `vX.Y.Z` becomes the image tag `X.Y.Z` (and updates
+`latest`):
 
 ```sh
-git tag server-v1.0.0
-git push origin server-v1.0.0
+# Bump version in package.json first, then:
+gh release create v1.0.0 --generate-notes
 ```
 
 You can also trigger the workflow manually (`workflow_dispatch`), which publishes

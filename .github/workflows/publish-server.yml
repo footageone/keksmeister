@@ -1,9 +1,8 @@
 name: Publish consent-log image
 
 on:
-  push:
-    tags:
-      - 'server-v*'
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -32,8 +31,9 @@ jobs:
         id: meta
         run: |
           IMAGE="ghcr.io/$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')/keksmeister-consent-log"
-          if [ "${{ github.ref_type }}" = "tag" ]; then
-            VERSION="${GITHUB_REF_NAME#server-v}"
+          if [ "${{ github.event_name }}" = "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+            VERSION="${VERSION#v}"
             TAGS="$IMAGE:$VERSION,$IMAGE:latest"
           else
             TAGS="$IMAGE:edge"
