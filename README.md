@@ -159,6 +159,10 @@ file, ZIP the folder for a regulator export).
 
 See the [Consent Proof & Server-Side Logging guide](docs/consent-logging.md) for
 the full `logging` options, audit fields, CORS configuration, and export details.
+For how Keksmeister maps to **§ 25 TDDDG**, the **DSK Orientierungshilfe**, and
+the **EinwV / § 26 TDDDG** boundaries (Keksmeister is a self-hosted library,
+not an anerkannter Einwilligungsverwaltungsdienst), see
+[docs/compliance.md](docs/compliance.md).
 
 ### Script Blocking
 
