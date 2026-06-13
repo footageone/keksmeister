@@ -157,6 +157,9 @@ A ready-to-run, database-free endpoint for this is included in
 [`server/`](server/README.md) (Bun + Docker; stores each record as a plain JSON
 file, ZIP the folder for a regulator export).
 
+See the [Consent Proof & Server-Side Logging guide](docs/consent-logging.md) for
+the full `logging` options, audit fields, CORS configuration, and export details.
+
 ### Script Blocking
 
 For third-party scripts loaded via `<script>` tags:

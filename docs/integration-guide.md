@@ -83,17 +83,38 @@ banner.config = {
       body: JSON.stringify(record),
     });
   },
+  // Or let Keksmeister log every decision (incl. revocations) for you:
+  logging: { endpoint: 'https://consent.example.com/consent' },
 };
 ```
+
+## Consent proof / server-side logging
+
+DSGVO / TDDDG require you to **prove** consent. Each `ConsentRecord` carries a
+`timestamp`, the banner `revision`, the `choices`, the `method`, an `action`
+(`grant` / `update` / `revoke`) and a pseudonymous, cookie-persisted `subjectId`.
+
+Ship records to your backend either via the `onConsent` callback (you own the
+transport) or the built-in `logging` option (reliable `sendBeacon` delivery with an
+offline retry queue, and it also logs revocations). A ready-to-run, database-free
+server is included in [`server/`](../server/README.md).
+
+See **[Consent Proof & Server-Side Logging](./consent-logging.md)** for the full
+guide, the `logging` options, CORS configuration, and audit/export details.
 
 ## Events
 
 | Event | When | Detail |
 |-------|------|--------|
 | `keksmeister:consent` | User accepts (all or custom) | `ConsentRecord` |
-| `keksmeister:revoke` | User rejects or revokes | `ConsentChoices` |
+| `keksmeister:revoke` | Consent is revoked via `revokeAll()` | `{ categoryId: '*' }` |
 | `keksmeister:open` | Banner or modal becomes visible | — |
 | `keksmeister:close` | Banner hides after user action | — |
+
+> A "Reject all" choice fires `keksmeister:consent` with a `ConsentRecord` whose
+> `choices` are all `false` (except required) — it is a recorded decision, not a
+> `keksmeister:revoke`. The `revoke` event fires only when consent is actively
+> withdrawn via `revokeAll()`.
 
 Listen on the banner element:
 
