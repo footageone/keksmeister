@@ -37,11 +37,13 @@ national transpositions and enforcement by each member-state DPA.
 | 🇩🇪 Germany | **§ 25 TDDDG** (since May 2024, replaces TTDSG) + **DSK-OH "Digitale Dienste" v1.2** (Nov 2024) | DSK-OH details visual button parity (Rn. 135), config snapshots (Rn. 85), opt-in default (Rn. 59). |
 | 🇫🇷 France | **CNIL Délibération 2020-091** + **Recommandation 2020-092** | "Refuser" must be as simple as accepting; cookie consent valid up to ~13 months. |
 | 🇮🇹 Italy | **Garante Provvedimento 231** (10 June 2021, enforced since Jan 2022) | Most prescriptive in the EU — see below. |
+| 🇪🇸 Spain | **AEPD Cookie Guideline update** (11 July 2023, mandatory **11 January 2024**) | Reject button required on Layer 1 in same shape as accept; Layer 1 must carry accept + reject + link-to-settings. |
 | 🇬🇧 UK | **PECR 2003** + **ICO guidance** + **Data (Use and Access) Act 2025** (key provisions in force **Feb 2026**) | Mostly mirrors EU rules; DUA Act adds narrow exceptions for low-risk analytics, security, fraud detection cookies. |
 
-> Not yet primarily verified in this document: AEPD (Spain), AP (Netherlands),
-> DPC (Ireland), DSB (Austria), APD/GBA (Belgium) post-May 2025. Treat
-> guidance for those markets as needing local-counsel review.
+> Not yet primarily verified in this document: AP (Netherlands),
+> DPC (Ireland), DSB (Austria), APD/GBA (Belgium) post-May 2025, and the
+> noyb cookie-banner sweep totals. Treat guidance for those markets as
+> needing local-counsel review.
 
 ## EU consensus — enforced everywhere
 
@@ -51,7 +53,7 @@ back-stopped by the EDPB Cookie Banner Task Force (Jan 2023):
 | Requirement | Source |
 |---|---|
 | Scrolling / continuing to browse is **not** consent — an unambiguous positive action is required. | CNIL Délib. 2020-091; Garante Provv. 231; ICO PECR; EDPB 05/2020 |
-| **Reject must be equally easy and visually equivalent to accept** on Layer 1 — same size, colour, weight; no buried text link. | CNIL Délib. 2020-091; Garante Provv. 231; EDPB Cookie Banner Task Force Jan 2023 |
+| **Reject must be equally easy and visually equivalent to accept** on Layer 1 — same size, colour, weight; no buried text link. | CNIL Délib. 2020-091; Garante Provv. 231; AEPD Cookie Guideline (Jul 2023 update); EDPB Cookie Banner Task Force Jan 2023 |
 | Reject offered only as a text link inside paragraph copy = violation. | EDPB Cookie Banner Task Force Jan 2023 |
 | Reject offered only **outside** the banner frame (e.g. "click here in our policy") = violation. | EDPB Cookie Banner Task Force Jan 2023 |
 | **No pre-ticked checkboxes**, including on the settings (Layer 2) page. | DSGVO ErwGr 32; EDPB Cookie Banner Task Force Jan 2023 |
@@ -114,6 +116,32 @@ the DSK-OH:
 If you serve Italian visitors, the IT rules are the binding floor for your
 banner design — not the DSK-OH.
 
+### 🇪🇸 Spain (AEPD Cookie Guideline, July 2023 update)
+
+- AEPD updated its cookie guideline on **11 July 2023** with mandatory
+  compliance by **11 January 2024**. The update aligns Spain explicitly
+  with EDPB Guidelines 03/2022 on deceptive design patterns.
+- "El rechazo de las cookies debe ser tan sencillo como su aceptación,
+  debiendo estar disponible el botón de «rechazar» en el primer nivel del
+  banner." — primary source, AEPD press release.
+- Concrete Layer 1 composition required:
+  - **(a) Accept** button.
+  - **(b) Reject** button (same control type, same prominence, same
+    level — not buried as a link).
+  - **(c) Link** to the granular settings panel.
+- No design "steering" toward acceptance — same EDPB Stirring concept
+  that informs the German DSK-OH but here it is explicit AEPD doctrine.
+- → Keksmeister already satisfies the Layer 1 composition (accept +
+  reject + settings) and visual parity. No code change needed for
+  Spanish traffic; the AEPD guideline strengthens the case for the
+  visual-parity work already done.
+
+> Refuted in research (do not propagate): a maximum 12-month consent
+> retention, a general cookie-wall ban, and a granularity mandate
+> attributed to the AEPD all *failed* primary verification against the
+> July-2023 press release. They appear in secondary blog posts but not
+> in the AEPD source — flag those secondary sources accordingly.
+
 ### 🇬🇧 UK (ICO + PECR + DUA Act 2025)
 
 - **PECR 2003** — the UK's transposition of the ePrivacy Directive.
@@ -126,6 +154,47 @@ banner design — not the DSK-OH.
   else.
 - For Keksmeister: no changes are required for UK-only traffic. If you run
   a single banner for EU + UK visitors, design to the stricter rule (DSGVO).
+
+## Consent or Pay (EDPB Opinion 08/2024)
+
+This section is **context, not a Keksmeister feature**. Keksmeister is a
+consent banner; it does not implement, sell or model "pay or consent"
+flows. Operators considering one need to know how the EDPB has framed it.
+
+- **EDPB Opinion 08/2024** (17 April 2024) was triggered by a joint
+  Art. 64(2) request from the Dutch AP, the Norwegian Datatilsynet, and
+  the Hamburg DPA (HmbBfDI). It assesses whether consent obtained in
+  "consent-or-pay" models on **large online platforms (LOPs)** can be
+  *freely given* under DSGVO Art. 4(11) / 7.
+- Four criteria for valid consent in this context:
+  1. **Conditionality** — consent cannot be a condition for accessing
+     the service in the way the model is presented.
+  2. **Detriment** — refusing consent must not subject the user to a
+     disadvantage that vitiates free choice.
+  3. **Imbalance of power** between the controller and the data subject.
+  4. **Granularity** — per-purpose consent must remain possible.
+- The Opinion explicitly states personal data is **not** a tradeable
+  commodity ("personal data cannot be considered as a tradeable
+  commodity") and that the fundamental right must not become a feature
+  one pays for.
+- **Scope is LOPs only.** The Opinion does not directly bind smaller
+  publishers; for them the general DSGVO Art. 7(4) coupling prohibition
+  still applies, but the LOP-specific reasoning does not transplant
+  mechanically.
+- Meta Platforms Ireland has challenged the Opinion at the CJEU
+  (**T-319/24**); proceedings are pending as of mid-2026.
+- The EDPB held a stakeholder event on the next iteration of these
+  rules in **November 2024**, and broader Consent-or-Pay guidelines
+  with wider scope are on the EDPB **2026–2027 work programme**.
+
+### Refuted reading (do not propagate)
+
+A common but **incorrect** reading of Opinion 08/2024 is that "LOPs
+*must* offer a free third alternative without behavioural advertising".
+This claim failed primary verification — the Opinion is more nuanced and
+mainly asks whether the binary choice is *free*; it does not codify a
+free-third-tier obligation. Track the upcoming EDPB guidelines for the
+authoritative wording.
 
 ## Trigger placement — required for DSGVO Art. 7(3)
 
@@ -218,3 +287,12 @@ listed here so they do not creep back into the docs by accident:
   the classification was under **Art. 4(7)** (controller), not Art. 26
   (joint controllership), and a Belgian appellate court has since
   narrowed the scope to the TC-String only.
+- "AEPD mandates a 12-month consent retention" / "AEPD bans cookie
+  walls outright" / "AEPD mandates per-purpose granularity" — none of
+  these claims survive a primary-source check against the AEPD's 11 July
+  2023 press release. They appear in legal blogs but are not in the
+  AEPD's own publication.
+- "EDPB Opinion 08/2024 forces large platforms to offer a free
+  ad-free third option" — the Opinion is more nuanced. It assesses
+  whether the binary choice is free, not whether a third option is
+  mandatory.
