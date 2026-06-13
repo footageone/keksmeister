@@ -103,16 +103,30 @@ export class ConsentManager extends EventTarget {
    * Uses `consentMaxAgeDays` when configured; otherwise falls back to
    * {@link DEFAULT_CONSENT_MAX_AGE_DAYS} (CNIL six-month guidance). Set
    * `consentMaxAgeDays: 0` to disable the re-prompt entirely.
+   *
+   * Invariants:
+   * - Only an exact `0` disables expiry. Negative numbers and any
+   *   non-finite value (NaN, ±Infinity) fall back to the default — a
+   *   misconfigured `NaN` from a runtime cast must not silently turn off
+   *   re-prompting.
+   * - A stored timestamp that cannot be parsed is treated as expired so
+   *   a corrupted cookie can't suppress the banner.
    */
   get isConsentExpired(): boolean {
     const configured = this.config.consentMaxAgeDays;
-    const maxAgeDays = configured ?? DEFAULT_CONSENT_MAX_AGE_DAYS;
-    if (maxAgeDays <= 0) return false;
+    const maxAgeDays =
+      configured === 0
+        ? 0
+        : typeof configured === 'number' && Number.isFinite(configured) && configured > 0
+          ? configured
+          : DEFAULT_CONSENT_MAX_AGE_DAYS;
+    if (maxAgeDays === 0) return false;
 
     const record = this.store.read();
     if (!record) return false;
 
     const consentDate = new Date(record.timestamp).getTime();
+    if (!Number.isFinite(consentDate)) return true;
     const maxAgeMs = maxAgeDays * 864e5;
     return Date.now() - consentDate > maxAgeMs;
   }

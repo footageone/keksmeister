@@ -359,6 +359,37 @@ describe('ConsentManager', () => {
       expect(manager2.isConsentExpired).toBe(false);
       expect(manager2.shouldShowBanner).toBe(false);
     });
+
+    it('treats NaN / Infinity / negative as misconfigured and uses the default', () => {
+      for (const bad of [NaN, Infinity, -Infinity, -1, -180]) {
+        const config = createConfig({ consentMaxAgeDays: bad });
+        const m1 = new ConsentManager(config);
+        m1.acceptAll();
+
+        const store = m1['store'];
+        const record = store.read()!;
+        record.timestamp = new Date(Date.now() - 181 * 864e5).toISOString();
+        store.write(record);
+
+        const m2 = new ConsentManager(config);
+        expect(m2.isConsentExpired, `consentMaxAgeDays=${String(bad)}`).toBe(true);
+      }
+    });
+
+    it('treats a corrupted stored timestamp as expired', () => {
+      const config = createConfig({ consentMaxAgeDays: 180 });
+      const m1 = new ConsentManager(config);
+      m1.acceptAll();
+
+      const store = m1['store'];
+      const record = store.read()!;
+      record.timestamp = 'not-a-real-date';
+      store.write(record);
+
+      const m2 = new ConsentManager(config);
+      expect(m2.isConsentExpired).toBe(true);
+      expect(m2.shouldShowBanner).toBe(true);
+    });
   });
 
   describe('opt-out mode', () => {
