@@ -90,6 +90,47 @@
   align-items: center;
 }
 
+/* Close-as-reject (×) — optional, Italian Garante Provv. 231. Positioned in
+   the top-right of the banner. Generous tap target so keyboard and touch
+   users can reach it as easily as the buttons in the action row. */
+.km-banner {
+  position: relative;
+}
+
+.km-banner__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+  background: transparent;
+  border: 1px solid var(--km-border);
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--km-text);
+  padding: 0;
+}
+
+.km-banner__close:hover {
+  background: var(--km-secondary);
+}
+
+.km-banner__close:focus-visible {
+  outline: 2px solid var(--km-primary);
+  outline-offset: 2px;
+}
+
+.km-banner__close-hint {
+  margin: 0;
+  font-size: 0.85em;
+  color: var(--km-text-secondary);
+}
+
 /* --- Buttons --- */
 
 .km-btn {

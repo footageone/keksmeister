@@ -191,6 +191,18 @@ export class KeksmeisterBanner extends HTMLElement {
     actions.append(acceptBtn, rejectBtn, settingsBtn);
     inner.appendChild(actions);
 
+    if (this._config?.closeAsReject) {
+      // Italian Garante (Provv. 231): the close affordance must exist AND
+      // the banner must say what it does. Both pieces are added together so
+      // operators can't accidentally ship the icon without the notice.
+      banner.appendChild(this.buildCloseButton());
+      const hint = document.createElement('p');
+      hint.className = 'km-banner__close-hint';
+      hint.textContent =
+        t.closeRejectHint ?? 'Closing this banner counts as a rejection.';
+      inner.appendChild(hint);
+    }
+
     if (this._config?.privacyUrl) {
       const privacyDiv = document.createElement('div');
       privacyDiv.className = 'km-privacy-link';
@@ -205,6 +217,20 @@ export class KeksmeisterBanner extends HTMLElement {
 
     banner.appendChild(inner);
     return banner;
+  }
+
+  private buildCloseButton(): HTMLButtonElement {
+    const t = this.translations.banner;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'km-banner__close';
+    btn.dataset.action = 'close-reject';
+    btn.setAttribute(
+      'aria-label',
+      t.closeReject ?? 'Close and reject all cookies'
+    );
+    btn.textContent = '×'; // ×
+    return btn;
   }
 
   private buildModalDOM(): HTMLElement {
@@ -375,6 +401,7 @@ export class KeksmeisterBanner extends HTMLElement {
           this.hide();
           break;
         case 'reject-all':
+        case 'close-reject':
           this._manager!.rejectAll();
           this.hide();
           break;
@@ -386,14 +413,20 @@ export class KeksmeisterBanner extends HTMLElement {
       }
     }, { signal });
 
-    // Escape closes the banner
     this.shadowRoot?.addEventListener('keydown', (e) => {
-      if ((e as KeyboardEvent).key === 'Escape') {
-        // Don't auto-hide on Escape in banner mode — the user hasn't consented yet.
-        // Instead, move focus to the first button.
-        const first = this.shadowRoot?.querySelector<HTMLElement>('button');
-        first?.focus();
+      if ((e as KeyboardEvent).key !== 'Escape') return;
+      if (this._config?.closeAsReject) {
+        // closeAsReject is on → Escape is the keyboard equivalent of the
+        // × button: treat it as a rejection, same as Garante Provv. 231
+        // requires from the close affordance.
+        this._manager!.rejectAll();
+        this.hide();
+        return;
       }
+      // Default: don't auto-hide on Escape — the user hasn't consented yet.
+      // Move focus to the first button so keyboard users stay oriented.
+      const first = this.shadowRoot?.querySelector<HTMLElement>('button');
+      first?.focus();
     }, { signal });
   }
 

@@ -8,6 +8,8 @@ export const de: KeksmeisterTranslations = {
     acceptAll: 'Alle akzeptieren',
     rejectAll: 'Alle ablehnen',
     settings: 'Einstellungen',
+    closeReject: 'Schließen und alle Cookies ablehnen',
+    closeRejectHint: 'Schließen dieses Banners gilt als Ablehnung.',
   },
   modal: {
     title: 'Cookie-Einstellungen',

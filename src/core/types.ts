@@ -113,6 +113,19 @@ export interface KeksmeisterTranslations {
     acceptAll: string;
     rejectAll: string;
     settings: string;
+    /**
+     * Accessible label for the optional close-as-reject icon (Garante
+     * Provv. 231). Only used when {@link KeksmeisterConfig.closeAsReject}
+     * is true. Default: "Close and reject all cookies".
+     */
+    closeReject?: string;
+    /**
+     * Short, visible hint shown inside the banner explaining that
+     * closing equals rejection. Only used when
+     * {@link KeksmeisterConfig.closeAsReject} is true. Italian DPA
+     * (Garante) requires this notice to be explicit.
+     */
+    closeRejectHint?: string;
   };
   modal: {
     title: string;
@@ -192,6 +205,14 @@ export interface KeksmeisterConfig {
   mode?: 'opt-in' | 'opt-out';
   /** If true, show individual services under each category in the settings modal */
   showServices?: boolean;
+  /**
+   * If true, render a close (×) icon on the banner and treat clicking it
+   * (or pressing Escape) as a full rejection. The Italian Garante
+   * (Provvedimento 231, 10 June 2021) requires that closing the banner
+   * counts as "no" and that this be communicated explicitly — for sites
+   * serving Italian visitors, enable this option. Default: `false`.
+   */
+  closeAsReject?: boolean;
 }
 
 /**

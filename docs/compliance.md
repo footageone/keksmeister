@@ -1,30 +1,141 @@
-# Compliance Context (DE/EU)
+# Compliance Context (EU)
 
-This document maps what Keksmeister implements to the rules that apply in
-Germany and the EU as of mid-2026. It is **not** legal advice — your DPO
-still needs to sign off — but it shows which obligations the library
-addresses out of the box and which ones depend on how you deploy it.
+This document maps what Keksmeister implements to the cookie-consent rules
+that apply across the EU (plus the UK) as of mid-2026. It is **not** legal
+advice — your DPO still needs to sign off — but it shows which obligations
+the library addresses out of the box and which ones depend on how you
+deploy it.
+
+> **Sources.** All claims below are verified against primary documents
+> (regulator PDFs, enforcement decisions, EDPB opinions) — never against
+> blog-post summaries. Where a national authority has not been verified
+> primarily, the section says so.
 
 ## The legal stack
 
-| Rule | What it covers | How Keksmeister relates |
+Cookie consent in the EU lives at three levels: a single EU regulation
+(DSGVO) and directive (ePrivacy), supranational interpretation (EDPB), and
+national transpositions and enforcement by each member-state DPA.
+
+### Supranational
+
+| Rule | What it covers |
+|---|---|
+| **DSGVO Art. 6(1)(a), Art. 7** | Conditions for valid consent and proof of consent (Rechenschaftspflicht). |
+| **DSGVO Art. 7(3)** | Withdrawal must be as easy as giving consent. |
+| **DSGVO ErwGr 32** | Silence, pre-ticked boxes or inactivity ≠ consent. |
+| **ePrivacy Directive 2002/58/EG, Art. 5(3)** | Prior consent for any non-strictly-necessary access to information stored on the visitor's device. |
+| **EDPB Guidelines 05/2020** | Conditions of valid consent (granularity, unambiguity, withdrawal). |
+| **EDPB Guidelines 03/2022** | Deceptive design patterns in consent flows. |
+| **EDPB Cookie Banner Task Force Report** (Jan 2023) | Joint EU position on what banner designs cross into invalid consent — reject-as-link, pre-ticked Layer 2, etc. |
+| **ePrivacy-Verordnung** (proposed regulation) | **Withdrawn** by the EU Commission in February 2025. The 2002 Directive remains operative. |
+
+### National (selection, verified primarily)
+
+| Country | Rule | Notes |
 |---|---|---|
-| **§ 25 TDDDG** (Telekommunikation-Digitale-Dienste-Datenschutz-Gesetz, in force since **May 2024**, replaces TTDSG) | Setting and reading information on the visitor's terminal — i.e. cookies, `localStorage`, fingerprinting. Requires prior, informed consent for anything that isn't strictly necessary. | The ``ScriptBlocker`` keeps non-essential ``<script>`` tags out of the page until the matching category is granted. The ``onConsent`` callback / built-in logger only fire after a real consent decision. |
-| **DSGVO Art. 6(1)(a), Art. 7** | Conditions for valid consent and proof of consent (Rechenschaftspflicht). | Each decision becomes a ``ConsentRecord`` (timestamp, revision, choices, method, action, subjectId) — see [consent-logging.md](consent-logging.md). |
-| **DSGVO Art. 7(3)** | Withdrawal must be as easy as giving consent. | ``ConsentManager.revokeAll()`` exists and is exposed through the ``<keksmeister-trigger>`` element — but only if **you place that element on every page** (see "Trigger placement" below). |
-| **DSK-OH "Digitale Dienste" v1.2** (Nov 2024) | German supervisory authorities' practical reading of TDDDG + DSGVO. | Reject button on Layer 1 (Rn. 135), banner-config snapshot per revision (Rn. 85), opt-in default (Rn. 59), pseudonymity (Rn. 84) — all implemented. |
-| **EDPB Guidelines 03/2022** | Deceptive design patterns in consent flows. | No pre-checked boxes; accept and reject have the same visual weight on Layer 1 and Layer 2 (see [the styles guide](../src/ui/styles.css)). |
-| **ePrivacy-Verordnung** | Would have replaced the ePrivacy Directive at EU level. | **Withdrawn** by the EU Commission in February 2025. § 25 TDDDG (the German transposition of the 2002 Directive) remains the operative rule. |
+| 🇩🇪 Germany | **§ 25 TDDDG** (since May 2024, replaces TTDSG) + **DSK-OH "Digitale Dienste" v1.2** (Nov 2024) | DSK-OH details visual button parity (Rn. 135), config snapshots (Rn. 85), opt-in default (Rn. 59). |
+| 🇫🇷 France | **CNIL Délibération 2020-091** + **Recommandation 2020-092** | "Refuser" must be as simple as accepting; cookie consent valid up to ~13 months. |
+| 🇮🇹 Italy | **Garante Provvedimento 231** (10 June 2021, enforced since Jan 2022) | Most prescriptive in the EU — see below. |
+| 🇬🇧 UK | **PECR 2003** + **ICO guidance** + **Data (Use and Access) Act 2025** (key provisions in force **Feb 2026**) | Mostly mirrors EU rules; DUA Act adds narrow exceptions for low-risk analytics, security, fraud detection cookies. |
+
+> Not yet primarily verified in this document: AEPD (Spain), AP (Netherlands),
+> DPC (Ireland), DSB (Austria), APD/GBA (Belgium) post-May 2025. Treat
+> guidance for those markets as needing local-counsel review.
+
+## EU consensus — enforced everywhere
+
+These obligations are upheld by **every** DPA that has issued guidance, and
+back-stopped by the EDPB Cookie Banner Task Force (Jan 2023):
+
+| Requirement | Source |
+|---|---|
+| Scrolling / continuing to browse is **not** consent — an unambiguous positive action is required. | CNIL Délib. 2020-091; Garante Provv. 231; ICO PECR; EDPB 05/2020 |
+| **Reject must be equally easy and visually equivalent to accept** on Layer 1 — same size, colour, weight; no buried text link. | CNIL Délib. 2020-091; Garante Provv. 231; EDPB Cookie Banner Task Force Jan 2023 |
+| Reject offered only as a text link inside paragraph copy = violation. | EDPB Cookie Banner Task Force Jan 2023 |
+| Reject offered only **outside** the banner frame (e.g. "click here in our policy") = violation. | EDPB Cookie Banner Task Force Jan 2023 |
+| **No pre-ticked checkboxes**, including on the settings (Layer 2) page. | DSGVO ErwGr 32; EDPB Cookie Banner Task Force Jan 2023 |
+| Granular consent **per purpose** — bundling distinct purposes into a single "I agree" can void the consent's freedom. | CNIL Délib. 2020-091; EDPB 05/2020 |
+| Withdrawal must be **possible**, **at any time**, and **as easy as giving consent** — but no specific UI is mandated. | DSGVO Art. 7(3); EDPB Cookie Banner Task Force Jan 2023 |
+
+Keksmeister implements all seven by default. The visual-parity point is
+covered by the matched solid fills on accept and reject buttons; per-purpose
+granularity by the toggle-per-category modal; withdrawal by the
+``<keksmeister-trigger>`` element.
+
+## National variations — when the strict reading matters
+
+### 🇫🇷 France (CNIL)
+
+- **Délibération 2020-091**, Art. 2: "continuer à naviguer sur un site
+  web…ne constituent pas des actions positives claires assimilables à un
+  consentement valable."
+- **Rejection ≈ acceptance in effort**: "L'expression du refus de
+  l'utilisateur…doit pouvoir se traduire par une action présentant le même
+  degré de simplicité que celle permettant d'exprimer son consentement."
+- **CNIL vs. Google, € 325 m** (September 2025): users were nudged toward
+  the personalised-ads option ("encouraged to choose personalised
+  advertisements to the detriment of generic advertisements") — held to
+  violate the freedom-of-choice requirement. Strong signal that visual
+  nudging now triggers enforcement, not just guidance.
+- **Recommandation 2020-092** (not primarily re-verified here): operators
+  often cite a 6-month re-prompt window and up to 13-month cookie-consent
+  retention as CNIL practice.
+
+### 🇮🇹 Italy (Garante Provvedimento 231) — strictest in the EU
+
+The Italian rules add concrete, prescriptive requirements that go beyond
+the DSK-OH:
+
+- **Six-month minimum re-prompt window after a rejection** is *normed*
+  (not just recommended). The banner may only reappear after a rejection
+  if (a) the configuration materially changes, (b) the visitor clears
+  their cookies, or (c) at least six months have passed.
+  → Maps directly onto Keksmeister's ``consentMaxAgeDays`` default of
+  **180** (see [consent-logging.md](consent-logging.md)).
+- **Close button (X) counts as rejection.** The banner must have a clearly
+  visible close affordance, and clicking it must be treated as "no". The
+  banner must say so explicitly.
+  → Implemented in Keksmeister via the ``closeAsReject`` option on the
+  banner. Opt-in (default: off) so operators serving only the German
+  market do not get the extra UI without asking.
+- **Equal dimensions, emphasis and colour** for accept and reject buttons
+  ("comandi e caratteri di uguali dimensioni, enfasi e colori").
+  → Implemented via the matched ``--km-primary`` / ``--km-secondary`` solid
+  fills.
+- **Visually distinct banner** ("percettibile discontinuità") from the
+  underlying page — must not blend into content.
+- **Analytics without consent** is allowed only when *all three* hold:
+  - IP address masked to at least the 4th octet (covers a /24 range).
+  - Single site / single app — no cross-site reuse.
+  - The third-party measurement provider may not combine the data with
+    its own other processing.
+
+If you serve Italian visitors, the IT rules are the binding floor for your
+banner design — not the DSK-OH.
+
+### 🇬🇧 UK (ICO + PECR + DUA Act 2025)
+
+- **PECR 2003** — the UK's transposition of the ePrivacy Directive.
+  Substantively close to § 25 TDDDG / CNIL: prior consent for any
+  non-strictly-necessary cookie, scrolling is not consent.
+- **Data (Use and Access) Act 2025** — Royal Assent June 2025; key
+  provisions in force **February 2026**. Introduces *narrow* new exceptions
+  to the consent requirement for low-risk analytics, security and fraud-
+  detection cookies. **Does not** change the consent paradigm for anything
+  else.
+- For Keksmeister: no changes are required for UK-only traffic. If you run
+  a single banner for EU + UK visitors, design to the stricter rule (DSGVO).
 
 ## Trigger placement — required for DSGVO Art. 7(3)
 
-DSGVO Art. 7(3) requires that withdrawal of consent must be **as easy as
-giving it**. Hiding a withdrawal link three menu levels deep, behind a contact
-form, or in the privacy policy is not enough — the supervisory authorities
-treat that as Art. 7(3) violation.
+DSGVO Art. 7(3) requires withdrawal to be **as easy as giving consent**.
+Burying a withdrawal link three menu levels deep, behind a contact form,
+or inside the privacy policy is not enough — every DPA treats this as a
+violation.
 
-Keksmeister ships ``<keksmeister-trigger>`` for this. **You must place it on
-every page** where ``<keksmeister-banner>`` is also placed:
+Keksmeister ships ``<keksmeister-trigger>`` for this. **You must place it
+on every page** that also carries the banner:
 
 ```html
 <footer>
@@ -33,51 +144,77 @@ every page** where ``<keksmeister-banner>`` is also placed:
 </footer>
 ```
 
-If the trigger is missing on a page, that page does not satisfy Art. 7(3) —
-even though the underlying ``ConsentManager`` API still works.
+If the trigger is missing on a page, that page does not satisfy Art. 7(3)
+— even though the underlying ``ConsentManager`` API still works.
 
 The library cannot enforce this for you. Treat it as a deployment checklist
 item alongside the banner element itself.
 
-## EinwV / §26 TDDDG — what it is and why Keksmeister is *not* one
+## EinwV / § 26 TDDDG — German-specific, why Keksmeister is *not* one
 
 The **Einwilligungsverwaltungsverordnung** (EinwV), effective **1 April
-2025**, implements § 26 TDDDG. It creates an optional, BfDI-certified role
-called *anerkannter Einwilligungsverwaltungsdienst* (EVD). The idea: a
-neutral third-party service stores the visitor's consent preferences once,
-and websites query it instead of showing their own banner.
+2025**, implements § 26 TDDDG and creates an optional, BfDI-certified
+role called *anerkannter Einwilligungsverwaltungsdienst* (EVD): a neutral
+third-party service that stores consent preferences once and is queried
+by websites instead of each running its own banner.
 
 **Keksmeister is not an EVD and does not aim to become one.** It is a
-self-hosted library that lets your own website run its own banner. That is
-fully legitimate under § 25 TDDDG + DSGVO — no EinwV certification is
-required to operate your own consent flow.
-
-What this means for operators:
+self-hosted library — fully legitimate to deploy on your own site under
+§ 25 TDDDG + DSGVO without EinwV certification.
 
 - You can deploy Keksmeister on your own site without involving the BfDI.
 - If you want to *offer an EVD* to third parties, you need a separate,
   certified product. Keksmeister is not it.
 - As the EVD market matures, an integration that respects a visitor's
-  central EVD preference (if any) may become a useful Keksmeister feature.
-  It is not implemented today.
+  central EVD preference (if any) may become a useful feature. It is not
+  implemented today.
+
+The EinwV is a German-only construct. Other member states have no
+equivalent framework as of mid-2026.
 
 ## Snapshot of compliance choices (Stand 2026-06)
 
-- **Withdrawn ePrivacy-Verordnung** — no impact on this library; we follow
-  § 25 TDDDG and the 2002 Directive it implements.
-- **No IAB TCF** — the EuGH ruling C-604/22 (March 2024) treats TC-Strings
+- **No IAB TCF.** The EuGH ruling C-604/22 (March 2024) treats TC-Strings
   as personal data; Keksmeister does not emit, store or consume them, so
-  none of the related compliance debates apply.
-- **Retention of consent proof** — defaults to ~3 years
-  (§§ 195, 199 BGB civil limitation), see [consent-logging.md](consent-logging.md).
+  the TCF-related compliance debates do not apply here.
+- **Retention of consent proof** — defaults to ~3 years (§§ 195, 199 BGB
+  civil limitation), see [consent-logging.md](consent-logging.md). CNIL
+  practice tops out around 13 months on the consent record itself; if your
+  primary market is France, set ``RETENTION_DAYS`` accordingly on the
+  audit server.
+- **Re-prompt window** — Keksmeister's ``consentMaxAgeDays`` defaults to
+  **180** days, matching the Italian Garante's six-month floor and the
+  CNIL six-month operator practice. Operators wanting a longer window must
+  set it explicitly.
 
-## Where Keksmeister can *not* help you
+## What Keksmeister can *not* enforce for you
 
-These are operational obligations the library cannot enforce:
+These are operational obligations no library can solve:
 
 - Hosting the audit log inside the EU.
 - Listing the consent in your record of processing activities (Art. 30 DSGVO).
 - Naming the receiving service in your privacy policy.
-- Keeping the trigger on every page (see above).
-- Adjusting ``revision`` whenever the banner texts or categories change, so
-  the snapshot endpoint records the right version.
+- Keeping ``<keksmeister-trigger>`` on every page.
+- Bumping ``revision`` whenever banner texts or categories change so the
+  snapshot endpoint records the right version.
+- Country-specific tweaks — e.g. localising the banner copy to make the
+  close-as-rejection point explicit when serving Italian visitors.
+
+## Refuted claims (housekeeping)
+
+The research that informed this document also identified several
+widely-repeated claims that did not hold up under verification. They are
+listed here so they do not creep back into the docs by accident:
+
+- "noyb filed 422 / 456 / 516 formal complaints" — specific numbers from
+  noyb press releases were **not** confirmable against primary documents.
+  The noyb sweeps are real; the specific tallies often quoted in
+  secondary blogs are not reliable.
+- "The Belgian Market Court (May 2025) confirmed the substantive IAB TCF
+  findings" — the procedural quashing is documented, the substantive
+  confirmation is **not**. Treat the TCF legal status under Belgian law as
+  unsettled.
+- "EuGH classified IAB Europe as joint controller under Art. 26 DSGVO" —
+  the classification was under **Art. 4(7)** (controller), not Art. 26
+  (joint controllership), and a Belgian appellate court has since
+  narrowed the scope to the TC-String only.
