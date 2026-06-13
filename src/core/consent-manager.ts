@@ -21,6 +21,15 @@ function deepClone<T>(value: T): T {
 }
 
 /**
+ * Default re-prompt window. Picked to match the CNIL six-month guidance,
+ * which most EU DPAs accept as a defensible upper bound for how long a
+ * consent decision should stand without being re-asked. Operators can
+ * override via `KeksmeisterConfig.consentMaxAgeDays`, including disabling
+ * the re-prompt by setting it to `0`.
+ */
+const DEFAULT_CONSENT_MAX_AGE_DAYS = 180;
+
+/**
  * Generate a pseudonymous UUIDv4. Prefers crypto.randomUUID, then a
  * crypto.getRandomValues-based v4, and only falls back to Math.random in
  * environments without Web Crypto (rare, non-secure contexts).
@@ -102,10 +111,16 @@ export class ConsentManager extends EventTarget {
     return false;
   }
 
-  /** Whether the consent has exceeded the configured consentMaxAgeDays. */
+  /**
+   * Whether the stored consent has exceeded the re-prompt window.
+   * Uses `consentMaxAgeDays` when configured; otherwise falls back to
+   * {@link DEFAULT_CONSENT_MAX_AGE_DAYS} (CNIL six-month guidance). Set
+   * `consentMaxAgeDays: 0` to disable the re-prompt entirely.
+   */
   get isConsentExpired(): boolean {
-    const maxAgeDays = this.config.consentMaxAgeDays;
-    if (!maxAgeDays) return false;
+    const configured = this.config.consentMaxAgeDays;
+    const maxAgeDays = configured ?? DEFAULT_CONSENT_MAX_AGE_DAYS;
+    if (maxAgeDays <= 0) return false;
 
     const record = this.store.read();
     if (!record) return false;
