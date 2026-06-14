@@ -17,7 +17,7 @@ The library has a strict core/ui split:
 
 - `src/core/` — Headless consent engine. No DOM rendering. Can be used standalone.
   - `ConsentManager` — State machine, cookie persistence, events
-  - `ScriptBlocker` — Blocks/activates `<script data-keksmeister="...">` tags
+  - `ScriptBlocker` — Blocks/activates tagged resource elements (`<script>`, `<img>`, `<iframe>`, `<link>`, `<source>`, `<video>`, `<audio>`) carrying `data-keksmeister="<category>"`
   - `ServiceRegistry` + `ServiceAdapter` — Programmatic opt-in/opt-out for JS-based services
 - `src/adapters/` — Built-in service adapters (PostHog, Matomo, GA4, Meta Pixel, Mixpanel, HubSpot, Plausible, TikTok Pixel). Each adapter implements the `ServiceAdapter` interface.
 - `src/ui/` — Web Component (`<keksmeister-banner>`) using native Custom Elements + Shadow DOM.
