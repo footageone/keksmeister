@@ -38,12 +38,11 @@ national transpositions and enforcement by each member-state DPA.
 | 🇫🇷 France | **CNIL Délibération 2020-091** + **Recommandation 2020-092** | "Refuser" must be as simple as accepting; cookie consent valid up to ~13 months. |
 | 🇮🇹 Italy | **Garante Provvedimento 231** (10 June 2021, enforced since Jan 2022) | Most prescriptive in the EU — see below. |
 | 🇪🇸 Spain | **AEPD Cookie Guideline update** (11 July 2023, mandatory **11 January 2024**) | Reject button required on Layer 1 in same shape as accept; Layer 1 must carry accept + reject + link-to-settings. |
+| 🇳🇱 Netherlands | **Telecommunicatiewet Art. 11.7a** + **AP Normuitleg "Intrekken toestemming"** (8 March 2024) | Withdrawal must be informed-up-front, anytime, without detriment, as easy as consent. Active enforcement sweep ongoing. |
+| 🇮🇪 Ireland | **DPC Guidance Note** (April 2020) — still the authoritative cookie document | 6-month consent reaffirmation default; lead authority for Meta/Google/TikTok/LinkedIn/Apple in Dublin. |
+| 🇦🇹 Austria | **DSB** Google Analytics decision D155.027 (Jan 2022) + **ORF Bescheid D124.0507/24** (28 Oct 2024) | Accept-all and "Only necessary" must be visually identical on Layer 1. |
+| 🇧🇪 Belgium | **APD Decision 21/2022** + **Brussels Market Court rulings** (14 May 2025; 9 Jan 2026) | TC-String = personal data, IAB Europe = joint controller **only for TC-String** — not downstream RTB/targeting. €250k fine upheld; action plan annulled and pending redraft. |
 | 🇬🇧 UK | **PECR 2003** + **ICO guidance** + **Data (Use and Access) Act 2025** (key provisions in force **Feb 2026**) | Mostly mirrors EU rules; DUA Act adds narrow exceptions for low-risk analytics, security, fraud detection cookies. |
-
-> Not yet primarily verified in this document: AP (Netherlands),
-> DPC (Ireland), DSB (Austria), APD/GBA (Belgium) post-May 2025, and the
-> noyb cookie-banner sweep totals. Treat guidance for those markets as
-> needing local-counsel review.
 
 ## EU consensus — enforced everywhere
 
@@ -141,6 +140,130 @@ banner design — not the DSK-OH.
 > attributed to the AEPD all *failed* primary verification against the
 > July-2023 press release. They appear in secondary blog posts but not
 > in the AEPD source — flag those secondary sources accordingly.
+
+### 🇳🇱 Netherlands (AP — Telecommunicatiewet + Normuitleg, March 2024)
+
+- **Telecommunicatiewet Art. 11.7a** — the Dutch ePrivacy transposition,
+  identical structure to § 25 TDDDG / Art. 5(3) ePrivacy Directive:
+  prior consent for storing or accessing information on the visitor's
+  device.
+- **AP Normuitleg "Intrekken toestemming bij cookiebanners"** (8 March
+  2024) operationalises DSGVO Art. 7(3) for the cookie context. Four
+  cumulative requirements:
+  1. The visitor must be **informed up front** that consent can be
+     withdrawn and how.
+  2. Withdrawal must be possible **without detriment**.
+  3. Withdrawal must be possible **at any time**.
+  4. Withdrawal must be **as easy as giving consent**.
+- **Enforcement cadence (verified from AP press releases):**
+  - 2024 — five formal investigations opened, all five found
+    infringements.
+  - April 2025 — first 50 warning letters of a planned 500/year, target
+    sectors: online retail, media, insurance.
+  - Mid-2025 — over 200 sites warned; ~75% adjusted after the warning;
+    investigations opened against the holdouts.
+  - The AP continuously monitors roughly 10,000 Dutch websites.
+- Most-common failures the AP cites: cookies set **before** consent;
+  reject only on Layer 2; pre-checked tracking opt-in; visual
+  asymmetry between accept and reject.
+- **Cookie walls:** the AP's position is strict — a wall without a
+  genuine no-tracking alternative makes consent un-free. This is *stricter*
+  than the EDPB Opinion 08/2024, which is more nuanced for LOPs.
+- → Keksmeister already covers the four Art. 7(3) requirements via the
+  ``<keksmeister-trigger>`` + ``revokeAll()`` API and the visual
+  parity work for the reject button. The "informed up front" piece
+  depends on banner copy — operators serving Dutch traffic should
+  surface the withdrawal availability in the Layer 1 description text.
+
+### 🇮🇪 Ireland (DPC Guidance Note, April 2020)
+
+- The **2020 DPC Guidance Note** is still the authoritative cookie
+  document in Ireland — no later replacement has been issued. Several
+  concrete requirements stand out, all read from the primary PDF:
+  - **"Cookies that do not meet one of the two specific use cases…
+    must not be set or deployed on a user's device before you obtain
+    their consent."** Covers cookies, pixels, local storage, SDKs,
+    fingerprinting, "Like" buttons — not just cookies.
+  - **Equal prominence** between accept and reject — a banner with
+    only "OK / Got it" is explicitly non-compliant.
+  - **"Continued use" wording is not permissible** — scrolling, clicking
+    or using the site does not equal consent.
+  - **6-month consent reaffirmation default**: "you should ask the user
+    to reaffirm their consent no longer than six months after you have
+    stored this consent state". Operators can argue for longer, but
+    must justify it case by case.
+  - **Cookie lifespan must be proportionate to function.** A session
+    cookie "with a lifespan of 'forever'" is non-compliant.
+  - **No pre-checked boxes / sliders / "ON" defaults** — Planet49
+    explicitly cited.
+  - **No browser-settings-as-consent.**
+  - **Withdrawal as easy as consent** — the DPC suggests a persistent
+    on-page control (floating button or footer link).
+- **First-party analytics:** the DPC notes consent is still required
+  but treats first-party analytics as "unlikely a priority for
+  enforcement". Treat this as enforcement guidance, not a legal carve-out.
+- **As the lead authority for Meta, Google, TikTok, LinkedIn, Apple, and
+  Microsoft EU HQs**, what the DPC accepts as consent for those
+  controllers becomes the *de facto* EU floor for everyone else. Recent
+  big-ticket fines (LinkedIn €310m Oct 2024 for behavioural-advertising
+  consent quality, Meta €390m Jan 2023 for ads-legal-basis) are not
+  banner-design fines per se, but they reinforce the equal-prominence
+  and granularity-per-purpose lines.
+- → Keksmeister's defaults — opt-in, no pre-checked toggles,
+  per-category granularity, 180-day default re-prompt window — line up
+  with the DPC guidance. The 6-month DPC figure is the source most
+  operators will recognise for the ``consentMaxAgeDays`` default; treat
+  the **180-day Keksmeister default** as the DPC-aligned setting.
+
+### 🇦🇹 Austria (DSB)
+
+- **Bescheid D155.027 / 2021-0.586.257** (22 Dec 2021, published 13 Jan
+  2022) — Google Analytics use without sufficient TOMs violates
+  Chapter V DSGVO. The transfer dimension was largely resolved by the
+  **EU-US Data Privacy Framework** (July 2023); the cookie dimension
+  remains: § 165 TKG 2021 still demands prior consent for analytics
+  cookies, DPF or not.
+- **ORF Bescheid D124.0507/24** (28 October 2024) — the DSB explicitly
+  requires that "Accept all" and "Only necessary" on Layer 1 be
+  **visually equivalent**: identical (or near-identical) colour,
+  identical font size, identical contrast, no preferred positioning.
+  Cookie walls without a genuine alternative are not permitted.
+- → Maps onto the same matched-fill button design Keksmeister already
+  uses (PR #68 / Garante work). No additional code change needed for
+  Austrian traffic.
+
+### 🇧🇪 Belgium (APD/GBA + Brussels Market Court)
+
+The Belgian story is the IAB TCF saga, now substantially clarified:
+
+- **APD Decision 21/2022** (Feb 2022) — €250,000 fine + corrective
+  action plan against IAB Europe for TCF DSGVO violations.
+- **Brussels Market Court, 14 May 2025** — procedurally annulled the
+  APD decision for insufficient reasoning, *but* re-decided the merits
+  itself and confirmed:
+  - The **TC-String is personal data**.
+  - **IAB Europe is a joint controller** under Art. 4(7) + Art. 26
+    DSGVO — but **only for the TC-String processing inside the TCF**,
+    *not* for downstream RTB, targeting, or analytics.
+  - **The €250,000 fine is upheld.**
+- **Brussels Market Court, 9 January 2026** — annulled the APD's
+  January 2023 validation of IAB Europe's action plan because the APD
+  had not given IAB Europe an opportunity to respond and the plan
+  reached past IAB Europe's actual controllership. The APD must now
+  draft a narrower plan.
+- **TCF v2.2 remains usable.** No court has held the TCF illegal; v2.2
+  has folded in many of the corrective changes. Operators using a
+  TCF-based CMP need documented legal bases plus the post-2025
+  scope-limited reading of IAB Europe's role.
+- **Wider APD enforcement (2024):** decisions 37/2024 and 38/2024 hit
+  media companies for missing Layer-1 reject + colour-highlighted
+  accept buttons; decision 131/2024 imposed €350,000 on a digital
+  marketing firm for un-grounded profiling; the APD threatened four
+  press sites with €25,000 daily fines for persistent dark patterns.
+- → Keksmeister does not implement the TCF, so the IAB Europe rulings
+  do not impose direct obligations. The 37/2024 + 38/2024 reading
+  reinforces the EU consensus on Layer-1 reject and visual parity that
+  Keksmeister already satisfies.
 
 ### 🇬🇧 UK (ICO + PECR + DUA Act 2025)
 
@@ -241,11 +364,55 @@ self-hosted library — fully legitimate to deploy on your own site under
 The EinwV is a German-only construct. Other member states have no
 equivalent framework as of mid-2026.
 
+## Beyond cookies — EDPB Guidelines 02/2023 v2.0 (October 2024)
+
+The EDPB finalised v2.0 of **Guidelines 02/2023 on the technical scope
+of Art. 5(3) ePrivacy** on **7 October 2024**. Two consequences matter
+for any consent-banner library:
+
+1. **The trigger is "either storage OR access"** — both legs are
+   independent. The familiar examples (cookies, ``localStorage``) cover
+   storage; the access leg pulls in mechanisms many banners ignore.
+2. **In-scope mechanisms** explicitly listed:
+   - Cookies (any kind).
+   - **Tracking pixels and pixel URLs** — embedded ``<img>`` /
+     ``<iframe>`` that load on page render and call back to the
+     tracker.
+   - **URL tracking** — query-string-based trackers, redirect chains.
+   - **IP-address tracking** (under specific conditions).
+   - **Device fingerprinting** (building on Art. 29 WP Opinion 9/2014).
+   - **Unique identifiers** and IoT-style reporting.
+   - **Local processing followed by transmission** of any derived data.
+   - The browser cache / transient client-side storage of information.
+
+The EDPB also confirms Art. 5(3) catches **non-personal data**, so the
+DSGVO does not have to apply for the consent requirement to bite.
+
+**Implication for Keksmeister.** Today the ``ScriptBlocker`` covers
+``<script>`` tags carrying ``data-keksmeister``. That handles JavaScript-
+delivered trackers but **does not** intercept pixel-based trackers
+embedded as ``<img>``, ``<iframe>``, or ``<link>`` tags, nor stylesheet-
+delivered tracking URLs (``background-image: url(tracker)``). Operators
+who deploy pixel-only trackers (Meta Pixel without the JS SDK, plain
+1x1-image counters, link-based attribution) need to gate those
+themselves — either with ``ServiceAdapter``s or by deferring the
+elements until consent is granted.
+
+Extending ``ScriptBlocker`` to also lift ``<img>`` / ``<iframe>`` /
+``<link>`` elements that carry ``data-keksmeister`` is a logical next
+step. Tracked as a follow-up after this PR.
+
 ## Snapshot of compliance choices (Stand 2026-06)
 
-- **No IAB TCF.** The EuGH ruling C-604/22 (March 2024) treats TC-Strings
-  as personal data; Keksmeister does not emit, store or consume them, so
-  the TCF-related compliance debates do not apply here.
+- **No IAB TCF.** The EuGH ruling **C-604/22** (7 March 2024) confirmed
+  that a TC-String **is personal data** under Art. 4(1) DSGVO when it can
+  be linked to an identifier, and that IAB Europe is a **joint
+  controller** under Art. 4(7) + Art. 26 — but **only for the TC-String
+  processing inside the TCF**, not for downstream RTB, ad targeting or
+  analytics. Keksmeister does not emit, store or consume TC-Strings, so
+  the related compliance debates do not apply here. The Belgian Market
+  Court (14 May 2025) re-decided the IAB case on the merits and
+  matched the EuGH reading; see the Belgium section above.
 - **Retention of consent proof** — defaults to ~3 years (§§ 195, 199 BGB
   civil limitation), see [consent-logging.md](consent-logging.md). CNIL
   practice tops out around 13 months on the consent record itself; if your
@@ -269,24 +436,34 @@ These are operational obligations no library can solve:
 - Country-specific tweaks — e.g. localising the banner copy to make the
   close-as-rejection point explicit when serving Italian visitors.
 
+## The noyb cookie-banner sweeps (verified figures)
+
+Earlier drafts of this document treated noyb's complaint tallies as
+"specific numbers not confirmable" because secondary sources mixed
+draft complaints, warnings, and formal complaints. Reading noyb's own
+press releases settles this:
+
+| Date | What happened | Verifiable from noyb |
+|---|---|---|
+| 31 May 2021 | First wave of **560 draft complaints** mailed to companies across 33 countries | "First 560 websites in 33 countries got a (free) draft complaint today" |
+| 10 Aug 2021 | **422 formal DSGVO complaints** filed with 10 DPAs after the 30-day cure period | noyb press release "noyb files 422 formal GDPR complaints…" |
+| 4 Mar 2022 | Round-1 cumulative total: **456 formal complaints, 20 DPAs**; new draft wave of 270 issued | "noyb had to file a total of 456 complaints with 20 different DPAs" |
+| 9 Aug 2022 | **226 formal complaints** filed against users of one specific CMP vendor (OneTrust), 18 DPAs | noyb press release "226 complaints lodged…" |
+| 11 Jul 2024 | noyb Consent Banner Report — analytical, not a new round | "How authorities actually decide" |
+
+The figure that gets misquoted most often is **"516 complaints"** — 516
+is the number of **companies warned** during the draft phase, not the
+number of formal complaints. The formal-complaint number is **422**
+(initial filing) or **456** (corrected round-1 total).
+
 ## Refuted claims (housekeeping)
 
 The research that informed this document also identified several
 widely-repeated claims that did not hold up under verification. They are
 listed here so they do not creep back into the docs by accident:
 
-- "noyb filed 422 / 456 / 516 formal complaints" — specific numbers from
-  noyb press releases were **not** confirmable against primary documents.
-  The noyb sweeps are real; the specific tallies often quoted in
-  secondary blogs are not reliable.
-- "The Belgian Market Court (May 2025) confirmed the substantive IAB TCF
-  findings" — the procedural quashing is documented, the substantive
-  confirmation is **not**. Treat the TCF legal status under Belgian law as
-  unsettled.
-- "EuGH classified IAB Europe as joint controller under Art. 26 DSGVO" —
-  the classification was under **Art. 4(7)** (controller), not Art. 26
-  (joint controllership), and a Belgian appellate court has since
-  narrowed the scope to the TC-String only.
+- "noyb filed 516 formal complaints" — 516 is the **warning** count, not
+  the complaint count. The verified figures live in the table above.
 - "AEPD mandates a 12-month consent retention" / "AEPD bans cookie
   walls outright" / "AEPD mandates per-purpose granularity" — none of
   these claims survive a primary-source check against the AEPD's 11 July
