@@ -6,9 +6,15 @@ import { clearCookies, createConfig } from '../test-utils.js';
 describe('ScriptBlocker', () => {
   beforeEach(() => {
     clearCookies();
-    // Clean up any test scripts
-    document.querySelectorAll('script[data-keksmeister]').forEach((el) => el.remove());
-    document.querySelectorAll('script[data-test-activated]').forEach((el) => el.remove());
+    document
+      .querySelectorAll('[data-keksmeister], [data-test-activated]')
+      .forEach((el) => el.remove());
+    // The flipped attributes survive across tests until removed.
+    document
+      .querySelectorAll(
+        'img[data-test-activated], iframe[data-test-activated], link[data-test-activated]'
+      )
+      .forEach((el) => el.remove());
   });
 
   it('does not activate scripts without consent', () => {
@@ -55,6 +61,129 @@ describe('ScriptBlocker', () => {
 
     blocker.stop();
     activated?.remove();
+  });
+
+  it('does not load a tagged <img> pixel before consent', () => {
+    const img = document.createElement('img');
+    img.setAttribute('data-keksmeister', 'marketing');
+    img.setAttribute('data-src', 'https://example.com/pixel.gif');
+    img.setAttribute('data-test-activated', 'true');
+    document.body.appendChild(img);
+
+    const manager = new ConsentManager(createConfig());
+    const blocker = new ScriptBlocker(manager);
+    blocker.start();
+
+    expect(img.hasAttribute('src')).toBe(false);
+    expect(img.hasAttribute('data-src')).toBe(true);
+    expect(img.hasAttribute('data-keksmeister')).toBe(true);
+
+    blocker.stop();
+    img.remove();
+  });
+
+  it('flips an <img> pixel data-src → src on consent', () => {
+    const img = document.createElement('img');
+    img.setAttribute('data-keksmeister', 'marketing');
+    img.setAttribute('data-src', 'https://example.com/pixel.gif');
+    img.setAttribute('data-test-activated', 'true');
+    document.body.appendChild(img);
+
+    const manager = new ConsentManager(createConfig());
+    const blocker = new ScriptBlocker(manager);
+    blocker.start();
+
+    manager.acceptAll();
+
+    expect(img.getAttribute('src')).toBe('https://example.com/pixel.gif');
+    expect(img.hasAttribute('data-src')).toBe(false);
+    expect(img.hasAttribute('data-keksmeister')).toBe(false);
+
+    blocker.stop();
+    img.remove();
+  });
+
+  it('flips an <iframe> data-src → src on consent', () => {
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('data-keksmeister', 'marketing');
+    iframe.setAttribute('data-src', 'https://example.com/widget');
+    iframe.setAttribute('data-test-activated', 'true');
+    document.body.appendChild(iframe);
+
+    const manager = new ConsentManager(createConfig());
+    const blocker = new ScriptBlocker(manager);
+    blocker.start();
+
+    manager.acceptAll();
+
+    expect(iframe.getAttribute('src')).toBe('https://example.com/widget');
+    expect(iframe.hasAttribute('data-keksmeister')).toBe(false);
+
+    blocker.stop();
+    iframe.remove();
+  });
+
+  it('flips a <link> data-href → href on consent', () => {
+    const link = document.createElement('link');
+    link.setAttribute('data-keksmeister', 'analytics');
+    link.setAttribute('rel', 'preload');
+    link.setAttribute('as', 'style');
+    link.setAttribute('data-href', 'https://example.com/asset.css');
+    link.setAttribute('data-test-activated', 'true');
+    document.head.appendChild(link);
+
+    const manager = new ConsentManager(createConfig());
+    const blocker = new ScriptBlocker(manager);
+    blocker.start();
+
+    manager.acceptAll();
+
+    expect(link.getAttribute('href')).toBe('https://example.com/asset.css');
+    expect(link.hasAttribute('data-href')).toBe(false);
+    expect(link.hasAttribute('data-keksmeister')).toBe(false);
+
+    blocker.stop();
+    link.remove();
+  });
+
+  it('respects per-category consent: <img> in marketing stays blocked after analytics-only consent', () => {
+    const img = document.createElement('img');
+    img.setAttribute('data-keksmeister', 'marketing');
+    img.setAttribute('data-src', 'https://example.com/pixel.gif');
+    img.setAttribute('data-test-activated', 'true');
+    document.body.appendChild(img);
+
+    const manager = new ConsentManager(createConfig());
+    const blocker = new ScriptBlocker(manager);
+    blocker.start();
+
+    manager.saveCustom({ analytics: true, marketing: false });
+
+    expect(img.hasAttribute('src')).toBe(false);
+    expect(img.hasAttribute('data-src')).toBe(true);
+
+    blocker.stop();
+    img.remove();
+  });
+
+  it('picks up a dynamically added pixel via MutationObserver', async () => {
+    const manager = new ConsentManager(createConfig());
+    const blocker = new ScriptBlocker(manager);
+    blocker.start();
+    manager.acceptAll();
+
+    const img = document.createElement('img');
+    img.setAttribute('data-keksmeister', 'marketing');
+    img.setAttribute('data-src', 'https://example.com/dynamic.gif');
+    document.body.appendChild(img);
+
+    // MutationObserver fires asynchronously.
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(img.getAttribute('src')).toBe('https://example.com/dynamic.gif');
+
+    blocker.stop();
+    img.remove();
   });
 
   it('stops observing after stop()', () => {

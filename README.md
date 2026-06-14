@@ -164,19 +164,33 @@ the **EinwV / § 26 TDDDG** boundaries (Keksmeister is a self-hosted library,
 not an anerkannter Einwilligungsverwaltungsdienst), see
 [docs/compliance.md](docs/compliance.md).
 
-### Script Blocking
+### Resource Blocking (`data-keksmeister`)
 
-For third-party scripts loaded via `<script>` tags:
+The blocker now covers every parse-time tracker the EDPB Guidelines
+02/2023 v2.0 puts in scope, not just `<script>`. Same `data-keksmeister`
+attribute, same placeholder pattern (`data-src` / `data-href`):
 
 ```html
-<!-- This script only executes after "analytics" consent -->
+<!-- JS analytics -->
 <script type="text/plain" data-keksmeister="analytics" data-src="https://example.com/analytics.js"></script>
 
-<!-- Inline scripts too -->
+<!-- Inline script -->
 <script type="text/plain" data-keksmeister="marketing">
   // This runs only after marketing consent
 </script>
+
+<!-- Tracking pixel (Meta Pixel, 1x1 counter, …) -->
+<img data-keksmeister="marketing" data-src="https://example.com/pixel.gif" width="1" height="1" alt="" />
+
+<!-- Embedded widget / map / video -->
+<iframe data-keksmeister="marketing" data-src="https://www.youtube.com/embed/…" allowfullscreen></iframe>
+
+<!-- preload / preconnect that fetches a third-party asset -->
+<link data-keksmeister="analytics" rel="preload" as="style" data-href="https://example.com/asset.css">
 ```
+
+The blocker also handles `<source>`, `<video>` and `<audio>`. `<a>` is
+intentionally not in scope: anchors only fetch on user click.
 
 ### Service Adapters (Programmatic Consent)
 
