@@ -170,7 +170,11 @@ DATA_DIR=./data sh server/scripts/export.sh
 ## Compliance notes (operational, not enforced by code)
 
 - **EU hosting** — run the server in an EU region; consent proof should not leave the EU.
-- **Retention ≥ 3 years** — keep the data volume (and backups) for at least three years.
+- **Retention ≈ 3 years** — the German civil limitation period (§§ 195, 199 BGB)
+  is three years, so consent proof needs to survive at least that long. After
+  the window expires, *delete* — keeping it longer violates the storage
+  limitation principle (Art. 5(1)(e) DSGVO). Use `server/scripts/prune.sh`
+  (default `RETENTION_DAYS=1095`) from cron to do this automatically.
 - **Pseudonymity** — the raw client IP is **never** stored. The server can store a
   salted SHA-256 hash instead via `HASH_IP_SALT` if you need a correlation handle.
 - **Backups** — the data directory is your single source of truth; back it up.

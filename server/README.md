@@ -189,12 +189,33 @@ From a running container:
 docker exec consent-log sh -c 'cd /data && zip -r - .' > consent-export.zip
 ```
 
+## Retention pruning
+
+Once your retention window has elapsed, delete the records that exceeded it —
+keeping them longer than necessary violates the storage limitation principle
+(Art. 5(1)(e) DSGVO).
+
+```sh
+# Dry run first to see what would go:
+DATA_DIR=./data RETENTION_DAYS=1095 DRY_RUN=1 sh scripts/prune.sh
+
+# For real:
+DATA_DIR=./data RETENTION_DAYS=1095 sh scripts/prune.sh
+```
+
+Run it from cron / a scheduled job. The default `RETENTION_DAYS=1095` (≈ 3
+years) matches the standard German civil limitation period (§§ 195, 199 BGB):
+proof must remain available at least until any claim arising out of the
+processing is time-barred. If your DPO mandates a different window, override
+the variable.
+
 ## Compliance notes (operational, not enforced by code)
 
 - **EU hosting** — deploy this container in an EU region; consent proof should
   not leave the EU.
-- **Retention ≥ 3 years** — keep the `data/` volume (and your backups) for at
-  least three years; prune older buckets after that.
+- **Retention ≈ 3 years** — the default `prune.sh` window mirrors §§ 195, 199
+  BGB (general civil limitation). Adjust `RETENTION_DAYS` to match your DPO's
+  guidance; never keep records longer than necessary (Art. 5(1)(e) DSGVO).
 - **Pseudonymity** — the raw IP is never written. Enable `HASH_IP_SALT` only if
   you need a pseudonymous correlation handle, and keep the salt secret.
 - **Backups** — the data directory is your single source of truth; back it up.
