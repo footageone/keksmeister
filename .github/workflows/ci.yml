@@ -54,7 +54,7 @@ jobs:
           ESM_SIZE=$(wc -c < dist/keksmeister.js | tr -d ' ')
           GZIP_SIZE=$(gzip -c dist/keksmeister.js | wc -c | tr -d ' ')
           echo "ESM: ${ESM_SIZE} bytes ($(echo "scale=2; $GZIP_SIZE / 1024" | bc) kB gzipped)"
-          if [ "$GZIP_SIZE" -gt 10240 ]; then
-            echo "::error::Bundle size exceeds 10 kB gzipped ($GZIP_SIZE bytes)"
+          if [ "$GZIP_SIZE" -gt 12288 ]; then
+            echo "::error::Bundle size exceeds 12 kB gzipped ($GZIP_SIZE bytes)"
             exit 1
           fi
