@@ -68,10 +68,20 @@ describe('ConsentLogger', () => {
     expect(headers['x-api-key']).toBe('k');
   });
 
-  it('auto transport uses fetch (not beacon) for a cross-origin endpoint', async () => {
-    // A cross-origin application/json beacon needs a preflight that beacons
-    // cannot perform: the browser drops it while sendBeacon() still returns
-    // true, so the record is silently lost. fetch(keepalive) handles CORS.
+  it('sends the beacon body as text/plain (CORS-safelisted) by default', () => {
+    const beacon = vi.fn(() => true);
+    vi.stubGlobal('navigator', { sendBeacon: beacon, onLine: true });
+
+    new ConsentLogger({ endpoint: '/c' }).log(record);
+
+    const blob = beacon.mock.calls[0]![1] as Blob;
+    expect(blob.type).toBe('text/plain;charset=utf-8');
+  });
+
+  it('auto transport uses beacon cross-origin when content-type is safelisted (default)', () => {
+    // text/plain is a CORS-safelisted content-type → the beacon is a "simple
+    // request" needing no preflight, so it reaches a cross-origin endpoint
+    // regardless of the server's CORS config.
     const beacon = vi.fn(() => true);
     const fetchMock = vi.fn(async () => okResponse());
     vi.stubGlobal('navigator', { sendBeacon: beacon, onLine: true });
@@ -79,9 +89,39 @@ describe('ConsentLogger', () => {
 
     new ConsentLogger({ endpoint: 'https://consent.example.com/c' }).log(record);
 
+    expect(beacon).toHaveBeenCalledTimes(1);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('auto transport uses fetch cross-origin when content-type is not safelisted', async () => {
+    // application/json is not safelisted: a cross-origin beacon would need a
+    // preflight beacons can't perform and would be silently dropped, so 'auto'
+    // switches to fetch(keepalive), which negotiates CORS correctly.
+    const beacon = vi.fn(() => true);
+    const fetchMock = vi.fn(async () => okResponse());
+    vi.stubGlobal('navigator', { sendBeacon: beacon, onLine: true });
+    vi.stubGlobal('fetch', fetchMock);
+
+    new ConsentLogger({
+      endpoint: 'https://consent.example.com/c',
+      contentType: 'application/json',
+    }).log(record);
+
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(fetchMock.mock.calls[0]![0]).toBe('https://consent.example.com/c');
     expect(beacon).not.toHaveBeenCalled();
+  });
+
+  it('uses the configured content-type for the fetch body', async () => {
+    const fetchMock = vi.fn(async () => okResponse());
+    vi.stubGlobal('navigator', { onLine: true });
+    vi.stubGlobal('fetch', fetchMock);
+
+    new ConsentLogger({ endpoint: '/c', contentType: 'application/json' }).log(record);
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const headers = fetchMock.mock.calls[0]![1]!.headers as Record<string, string>;
+    expect(headers['content-type']).toBe('application/json');
   });
 
   it('auto transport still prefers beacon for a same-origin endpoint', () => {
@@ -125,13 +165,14 @@ describe('ConsentLogger', () => {
     expect(beacon).not.toHaveBeenCalled();
   });
 
-  it('forces application/json even if the caller overrides content-type', async () => {
+  it('the configured content-type wins over a raw Content-Type header', async () => {
     const fetchMock = vi.fn(async () => okResponse());
     vi.stubGlobal('navigator', { onLine: true });
     vi.stubGlobal('fetch', fetchMock);
 
     new ConsentLogger({
       endpoint: '/c',
+      contentType: 'application/json',
       headers: { 'Content-Type': 'text/plain', 'x-api-key': 'k' },
     }).log(record);
 

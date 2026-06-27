@@ -11,11 +11,14 @@ const DEFAULT_SNAPSHOT_SENT_KEY_PREFIX = 'keksmeister_snapshot_sent_';
 /**
  * Reliable, fire-and-forget transport for consent records.
  *
- * - For same-origin endpoints, prefers `navigator.sendBeacon` so a record
- *   survives the page navigation that often follows "Accept all".
- * - For cross-origin endpoints, uses `fetch(..., { keepalive: true })`: a
- *   cross-origin application/json beacon needs a preflight that beacons cannot
- *   perform, so it is silently dropped. keepalive fetch survives navigation too.
+ * - Prefers `navigator.sendBeacon` so a record survives the page navigation
+ *   that often follows "Accept all". The body uses a CORS-safelisted
+ *   content-type (`text/plain` by default), so the beacon reaches cross-origin
+ *   endpoints with no preflight and regardless of server CORS.
+ * - If `contentType` is set to a non-safelisted type (e.g. `application/json`),
+ *   a cross-origin beacon would need a preflight beacons cannot perform and be
+ *   silently dropped, so `auto` falls back to `fetch(..., { keepalive: true })`
+ *   for cross-origin endpoints. keepalive fetch survives navigation too.
  * - Always uses `fetch` when custom headers are configured (beacons cannot set
  *   headers). The `transport` option can force `'beacon'` or `'fetch'`.
  * - Buffers failed sends in `localStorage` and retries them on construction
@@ -28,6 +31,7 @@ export class ConsentLogger {
   private readonly endpoint: string;
   private readonly snapshotEndpoint: string;
   private readonly transport: 'auto' | 'beacon' | 'fetch';
+  private readonly contentType: string;
   private readonly headers: Record<string, string>;
   private readonly includeUserAgent: boolean;
   private readonly queueKey: string;
@@ -40,6 +44,7 @@ export class ConsentLogger {
     this.endpoint = options.endpoint;
     this.snapshotEndpoint = options.snapshotEndpoint ?? `${options.endpoint}/snapshot`;
     this.transport = options.transport ?? 'auto';
+    this.contentType = options.contentType ?? 'text/plain;charset=UTF-8';
     this.headers = options.headers ?? {};
     this.includeUserAgent = options.includeUserAgent ?? false;
     this.queueKey = options.queueKey ?? DEFAULT_QUEUE_KEY;
@@ -136,15 +141,18 @@ export class ConsentLogger {
       typeof globalThis.navigator?.sendBeacon === 'function' &&
       Object.keys(this.headers).length === 0;
 
-    // 'auto' avoids sendBeacon for cross-origin endpoints: our beacon body is an
-    // application/json Blob, which is not a CORS-safelisted content-type and so
-    // requires a preflight that beacons cannot perform. The browser drops the
-    // request while sendBeacon() still returns true, silently losing the record.
-    // fetch(keepalive) negotiates CORS correctly and survives navigation just as
-    // well. Explicit 'beacon' is respected as-is — the caller opted in.
+    // 'auto' avoids sendBeacon for cross-origin endpoints whose content-type is
+    // NOT CORS-safelisted (e.g. application/json): such a beacon needs a
+    // preflight beacons cannot perform, so the browser drops it while
+    // sendBeacon() still returns true — silently losing the record. With a
+    // safelisted content-type (the default text/plain) the beacon is a simple
+    // request and reaches any origin without a preflight, so we keep it.
+    // fetch(keepalive) survives navigation just as well. Explicit 'beacon' is
+    // respected as-is — the caller opted in.
     const wantBeacon =
       this.transport === 'beacon' ||
-      (this.transport === 'auto' && !this.isCrossOrigin(url));
+      (this.transport === 'auto' &&
+        (!this.isCrossOrigin(url) || this.isSafelistedContentType()));
 
     if (wantBeacon && canBeacon) {
       if (this.sendBeacon(url, payload)) return true;
@@ -168,10 +176,24 @@ export class ConsentLogger {
     }
   }
 
+  /**
+   * True when `contentType`'s essence is CORS-safelisted, so a cross-origin
+   * beacon is a "simple request" that needs no preflight. Parameters (e.g.
+   * `;charset=UTF-8`) are ignored — only the type/subtype matters.
+   */
+  private isSafelistedContentType(): boolean {
+    const essence = this.contentType.split(';')[0]!.trim().toLowerCase();
+    return (
+      essence === 'text/plain' ||
+      essence === 'application/x-www-form-urlencoded' ||
+      essence === 'multipart/form-data'
+    );
+  }
+
   private sendBeacon(url: string, payload: unknown): boolean {
     try {
       const blob = new Blob([JSON.stringify(payload)], {
-        type: 'application/json',
+        type: this.contentType,
       });
       return globalThis.navigator.sendBeacon(url, blob);
     } catch {
@@ -199,16 +221,16 @@ export class ConsentLogger {
   }
 
   /**
-   * Merge custom headers but always force `content-type: application/json`,
-   * case-insensitively, so a caller can't accidentally break ingestion (e.g. by
-   * passing `Content-Type: text/plain`).
+   * Merge custom headers but always set the configured `content-type`
+   * (case-insensitively), so a raw `Content-Type` header in `headers` can't
+   * accidentally break ingestion or diverge from the beacon's content-type.
    */
   private buildFetchHeaders(): Record<string, string> {
     const headers: Record<string, string> = {};
     for (const [key, value] of Object.entries(this.headers)) {
       if (key.toLowerCase() !== 'content-type') headers[key] = value;
     }
-    headers['content-type'] = 'application/json';
+    headers['content-type'] = this.contentType;
     return headers;
   }
 
