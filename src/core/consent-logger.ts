@@ -11,10 +11,13 @@ const DEFAULT_SNAPSHOT_SENT_KEY_PREFIX = 'keksmeister_snapshot_sent_';
 /**
  * Reliable, fire-and-forget transport for consent records.
  *
- * - Prefers `navigator.sendBeacon` so a record survives the page navigation
- *   that often follows "Accept all".
- * - Falls back to `fetch(..., { keepalive: true })` (and always uses `fetch`
- *   when custom headers are configured, since beacons cannot set headers).
+ * - For same-origin endpoints, prefers `navigator.sendBeacon` so a record
+ *   survives the page navigation that often follows "Accept all".
+ * - For cross-origin endpoints, uses `fetch(..., { keepalive: true })`: a
+ *   cross-origin application/json beacon needs a preflight that beacons cannot
+ *   perform, so it is silently dropped. keepalive fetch survives navigation too.
+ * - Always uses `fetch` when custom headers are configured (beacons cannot set
+ *   headers). The `transport` option can force `'beacon'` or `'fetch'`.
  * - Buffers failed sends in `localStorage` and retries them on construction
  *   (i.e. the next page load) and after the next successful send.
  *
@@ -133,13 +136,36 @@ export class ConsentLogger {
       typeof globalThis.navigator?.sendBeacon === 'function' &&
       Object.keys(this.headers).length === 0;
 
-    // Beacon is only viable without custom headers (beacons can't set them), so
-    // gate it for both 'beacon' and 'auto'. With headers, we always use fetch.
-    if ((this.transport === 'beacon' || this.transport === 'auto') && canBeacon) {
+    // 'auto' avoids sendBeacon for cross-origin endpoints: our beacon body is an
+    // application/json Blob, which is not a CORS-safelisted content-type and so
+    // requires a preflight that beacons cannot perform. The browser drops the
+    // request while sendBeacon() still returns true, silently losing the record.
+    // fetch(keepalive) negotiates CORS correctly and survives navigation just as
+    // well. Explicit 'beacon' is respected as-is — the caller opted in.
+    const wantBeacon =
+      this.transport === 'beacon' ||
+      (this.transport === 'auto' && !this.isCrossOrigin(url));
+
+    if (wantBeacon && canBeacon) {
       if (this.sendBeacon(url, payload)) return true;
       // Beacon refused the payload — fall through to fetch.
     }
     return this.dispatchFetchTo(url, payload);
+  }
+
+  /**
+   * True when `url` resolves to a different origin than the current page.
+   * Relative URLs and environments without a `location` are treated as
+   * same-origin (the conservative default that preserves beacon usage).
+   */
+  private isCrossOrigin(url: string): boolean {
+    const here = globalThis.location;
+    if (!here?.origin) return false;
+    try {
+      return new URL(url, here.href).origin !== here.origin;
+    } catch {
+      return false;
+    }
   }
 
   private sendBeacon(url: string, payload: unknown): boolean {

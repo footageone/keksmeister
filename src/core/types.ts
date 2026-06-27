@@ -92,8 +92,10 @@ export interface ConsentLoggerOptions {
   snapshotEndpoint?: string;
   /**
    * Transport strategy:
-   * - `auto` (default): prefer `sendBeacon`, fall back to `fetch`
-   * - `beacon`: only `sendBeacon` (with `fetch` fallback if it returns false)
+   * - `auto` (default): `sendBeacon` for same-origin endpoints, `fetch` for
+   *   cross-origin ones (a cross-origin application/json beacon needs a
+   *   preflight beacons can't do and would be silently dropped)
+   * - `beacon`: always `sendBeacon` (with `fetch` fallback if it returns false)
    * - `fetch`: always `fetch`
    *
    * Note: `sendBeacon` cannot set custom headers — if `headers` are given,

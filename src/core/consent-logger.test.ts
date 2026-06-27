@@ -68,6 +68,47 @@ describe('ConsentLogger', () => {
     expect(headers['x-api-key']).toBe('k');
   });
 
+  it('auto transport uses fetch (not beacon) for a cross-origin endpoint', async () => {
+    // A cross-origin application/json beacon needs a preflight that beacons
+    // cannot perform: the browser drops it while sendBeacon() still returns
+    // true, so the record is silently lost. fetch(keepalive) handles CORS.
+    const beacon = vi.fn(() => true);
+    const fetchMock = vi.fn(async () => okResponse());
+    vi.stubGlobal('navigator', { sendBeacon: beacon, onLine: true });
+    vi.stubGlobal('fetch', fetchMock);
+
+    new ConsentLogger({ endpoint: 'https://consent.example.com/c' }).log(record);
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(fetchMock.mock.calls[0]![0]).toBe('https://consent.example.com/c');
+    expect(beacon).not.toHaveBeenCalled();
+  });
+
+  it('auto transport still prefers beacon for a same-origin endpoint', () => {
+    const beacon = vi.fn(() => true);
+    vi.stubGlobal('navigator', { sendBeacon: beacon, onLine: true });
+
+    // happy-dom origin is http://localhost:3000 — an absolute same-origin URL.
+    new ConsentLogger({ endpoint: 'http://localhost:3000/c' }).log(record);
+
+    expect(beacon).toHaveBeenCalledTimes(1);
+    expect(beacon.mock.calls[0]![0]).toBe('http://localhost:3000/c');
+  });
+
+  it('explicit "beacon" transport uses beacon even cross-origin', () => {
+    // When the caller explicitly opts into beacon we respect it (they may know
+    // their endpoint serves a safelisted content-type or accepts it).
+    const beacon = vi.fn(() => true);
+    vi.stubGlobal('navigator', { sendBeacon: beacon, onLine: true });
+
+    new ConsentLogger({
+      endpoint: 'https://consent.example.com/c',
+      transport: 'beacon',
+    }).log(record);
+
+    expect(beacon).toHaveBeenCalledTimes(1);
+  });
+
   it('uses fetch (not beacon) when transport is "beacon" but headers are set', async () => {
     const beacon = vi.fn(() => true);
     const fetchMock = vi.fn(async () => okResponse());
