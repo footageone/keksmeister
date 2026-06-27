@@ -92,9 +92,11 @@ export interface ConsentLoggerOptions {
   snapshotEndpoint?: string;
   /**
    * Transport strategy:
-   * - `auto` (default): `sendBeacon` for same-origin endpoints, `fetch` for
-   *   cross-origin ones (a cross-origin application/json beacon needs a
-   *   preflight beacons can't do and would be silently dropped)
+   * - `auto` (default): `sendBeacon` when same-origin, or when cross-origin and
+   *   `contentType` is CORS-safelisted (the default `text/plain` is). Falls back
+   *   to `fetch` only for a cross-origin endpoint with a non-safelisted
+   *   `contentType` (e.g. `application/json`), where a beacon would need a
+   *   preflight it can't perform and would be silently dropped. See `contentType`.
    * - `beacon`: always `sendBeacon` (with `fetch` fallback if it returns false)
    * - `fetch`: always `fetch`
    *
