@@ -68,6 +68,87 @@ describe('ConsentLogger', () => {
     expect(headers['x-api-key']).toBe('k');
   });
 
+  it('sends the beacon body as text/plain (CORS-safelisted) by default', () => {
+    const beacon = vi.fn(() => true);
+    vi.stubGlobal('navigator', { sendBeacon: beacon, onLine: true });
+
+    new ConsentLogger({ endpoint: '/c' }).log(record);
+
+    const blob = beacon.mock.calls[0]![1] as Blob;
+    expect(blob.type).toBe('text/plain;charset=utf-8');
+  });
+
+  it('auto transport uses beacon cross-origin when content-type is safelisted (default)', () => {
+    // text/plain is a CORS-safelisted content-type → the beacon is a "simple
+    // request" needing no preflight, so it reaches a cross-origin endpoint
+    // regardless of the server's CORS config.
+    const beacon = vi.fn(() => true);
+    const fetchMock = vi.fn(async () => okResponse());
+    vi.stubGlobal('navigator', { sendBeacon: beacon, onLine: true });
+    vi.stubGlobal('fetch', fetchMock);
+
+    new ConsentLogger({ endpoint: 'https://consent.example.com/c' }).log(record);
+
+    expect(beacon).toHaveBeenCalledTimes(1);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('auto transport uses fetch cross-origin when content-type is not safelisted', async () => {
+    // application/json is not safelisted: a cross-origin beacon would need a
+    // preflight beacons can't perform and would be silently dropped, so 'auto'
+    // switches to fetch(keepalive), which negotiates CORS correctly.
+    const beacon = vi.fn(() => true);
+    const fetchMock = vi.fn(async () => okResponse());
+    vi.stubGlobal('navigator', { sendBeacon: beacon, onLine: true });
+    vi.stubGlobal('fetch', fetchMock);
+
+    new ConsentLogger({
+      endpoint: 'https://consent.example.com/c',
+      contentType: 'application/json',
+    }).log(record);
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(fetchMock.mock.calls[0]![0]).toBe('https://consent.example.com/c');
+    expect(beacon).not.toHaveBeenCalled();
+  });
+
+  it('uses the configured content-type for the fetch body', async () => {
+    const fetchMock = vi.fn(async () => okResponse());
+    vi.stubGlobal('navigator', { onLine: true });
+    vi.stubGlobal('fetch', fetchMock);
+
+    new ConsentLogger({ endpoint: '/c', contentType: 'application/json' }).log(record);
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const headers = fetchMock.mock.calls[0]![1]!.headers as Record<string, string>;
+    expect(headers['content-type']).toBe('application/json');
+  });
+
+  it('auto transport still prefers beacon for a same-origin endpoint', () => {
+    const beacon = vi.fn(() => true);
+    vi.stubGlobal('navigator', { sendBeacon: beacon, onLine: true });
+
+    // happy-dom origin is http://localhost:3000 — an absolute same-origin URL.
+    new ConsentLogger({ endpoint: 'http://localhost:3000/c' }).log(record);
+
+    expect(beacon).toHaveBeenCalledTimes(1);
+    expect(beacon.mock.calls[0]![0]).toBe('http://localhost:3000/c');
+  });
+
+  it('explicit "beacon" transport uses beacon even cross-origin', () => {
+    // When the caller explicitly opts into beacon we respect it (they may know
+    // their endpoint serves a safelisted content-type or accepts it).
+    const beacon = vi.fn(() => true);
+    vi.stubGlobal('navigator', { sendBeacon: beacon, onLine: true });
+
+    new ConsentLogger({
+      endpoint: 'https://consent.example.com/c',
+      transport: 'beacon',
+    }).log(record);
+
+    expect(beacon).toHaveBeenCalledTimes(1);
+  });
+
   it('uses fetch (not beacon) when transport is "beacon" but headers are set', async () => {
     const beacon = vi.fn(() => true);
     const fetchMock = vi.fn(async () => okResponse());
@@ -84,13 +165,14 @@ describe('ConsentLogger', () => {
     expect(beacon).not.toHaveBeenCalled();
   });
 
-  it('forces application/json even if the caller overrides content-type', async () => {
+  it('the configured content-type wins over a raw Content-Type header', async () => {
     const fetchMock = vi.fn(async () => okResponse());
     vi.stubGlobal('navigator', { onLine: true });
     vi.stubGlobal('fetch', fetchMock);
 
     new ConsentLogger({
       endpoint: '/c',
+      contentType: 'application/json',
       headers: { 'Content-Type': 'text/plain', 'x-api-key': 'k' },
     }).log(record);
 

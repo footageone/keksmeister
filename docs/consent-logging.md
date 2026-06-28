@@ -77,8 +77,9 @@ The built-in logger is independent of `onConsent` — you can use both.
 
 | Option             | Default                      | Description |
 |--------------------|------------------------------|-------------|
-| `endpoint`         | _(required)_                 | URL that receives records via HTTP `POST` (`application/json`) |
+| `endpoint`         | _(required)_                 | URL that receives records via HTTP `POST` |
 | `transport`        | `auto`                       | `auto` (beacon, then fetch), `beacon`, or `fetch` |
+| `contentType`      | `text/plain;charset=UTF-8`   | Wire content-type for beacon **and** fetch. Default is CORS-safelisted (see below) |
 | `headers`          | `{}`                         | Extra headers — **forces `fetch`** (beacons cannot set headers) |
 | `includeUserAgent` | `false`                      | Attach `navigator.userAgent` to each sent record |
 | `queueKey`         | `keksmeister_consent_queue`  | `localStorage` key for the offline retry queue |
@@ -115,6 +116,14 @@ still gets recorded).
 
 - **`navigator.sendBeacon` first** — the record survives the page navigation that
   often follows "Accept all". Falls back to `fetch(…, { keepalive: true })`.
+- **Cross-origin safe by default** — the beacon body uses a CORS-safelisted
+  content-type (`text/plain;charset=UTF-8`), making it a "simple request" that
+  reaches a cross-origin endpoint with **no preflight and regardless of server
+  CORS**. The included server parses the body as JSON whatever the content-type.
+  If you point `endpoint` at a third-party endpoint that requires
+  `application/json`, set `contentType: 'application/json'`; `auto` then uses
+  `fetch` for cross-origin endpoints (a cross-origin JSON beacon would be
+  silently dropped), so that endpoint must allow CORS for the `POST`.
 - **Offline retry queue** — failed sends are buffered in `localStorage` and retried
   on the next page load (and after the next successful send). The queue is drained
   oldest-first and stops at the first failure, so a record is never silently dropped

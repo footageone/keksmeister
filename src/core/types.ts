@@ -92,14 +92,33 @@ export interface ConsentLoggerOptions {
   snapshotEndpoint?: string;
   /**
    * Transport strategy:
-   * - `auto` (default): prefer `sendBeacon`, fall back to `fetch`
-   * - `beacon`: only `sendBeacon` (with `fetch` fallback if it returns false)
+   * - `auto` (default): `sendBeacon` when same-origin, or when cross-origin and
+   *   `contentType` is CORS-safelisted (the default `text/plain` is). Falls back
+   *   to `fetch` only for a cross-origin endpoint with a non-safelisted
+   *   `contentType` (e.g. `application/json`), where a beacon would need a
+   *   preflight it can't perform and would be silently dropped. See `contentType`.
+   * - `beacon`: always `sendBeacon` (with `fetch` fallback if it returns false)
    * - `fetch`: always `fetch`
    *
    * Note: `sendBeacon` cannot set custom headers — if `headers` are given,
    * `fetch` is always used.
    */
   transport?: 'auto' | 'beacon' | 'fetch';
+  /**
+   * Content-type sent on the wire for both transports (beacon Blob type and
+   * fetch `Content-Type` header). Default `text/plain;charset=UTF-8`.
+   *
+   * The default is CORS-safelisted, which makes the beacon a "simple request":
+   * it reaches a cross-origin endpoint with no preflight and regardless of the
+   * server's CORS config — the most robust option for the built-in server,
+   * which parses the body as JSON irrespective of content-type.
+   *
+   * Set `application/json` for third-party endpoints that require it. Note that
+   * a non-safelisted content-type makes `auto` fall back to `fetch` for
+   * cross-origin endpoints (a cross-origin JSON beacon would be dropped), and
+   * such an endpoint must then allow CORS for the `fetch` to succeed.
+   */
+  contentType?: string;
   /** Extra headers, applied to the `fetch` transport only. */
   headers?: Record<string, string>;
   /** Attach `navigator.userAgent` to each sent record. Default: false. */
