@@ -189,6 +189,11 @@ export interface KeksmeisterTranslations {
     rejectAll: string;
     /** Label shown on required categories (default: "Always active" / "Immer aktiv") */
     alwaysActive?: string;
+    /**
+     * Accessible label for the visible close (×) button that returns to the
+     * banner view. Default: "Close".
+     */
+    close?: string;
   };
   /** Label for the privacy policy link */
   privacyLink?: string;

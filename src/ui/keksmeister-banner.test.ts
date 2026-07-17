@@ -97,3 +97,41 @@ describe('KeksmeisterBanner — closeAsReject (Garante Provv. 231)', () => {
     expect(hint?.textContent).toMatch(/rifiuto/i);
   });
 });
+
+describe('KeksmeisterBanner — modal close button', () => {
+  beforeEach(() => {
+    clearCookies();
+    document.body.replaceChildren();
+  });
+
+  it('renders a visible close button in the settings modal', () => {
+    const el = mountBanner(baseConfig());
+    el.openSettings();
+
+    const close = el.shadowRoot?.querySelector<HTMLButtonElement>('.km-modal__close');
+    expect(close).not.toBeNull();
+    expect(close!.getAttribute('aria-label')).toMatch(/close/i);
+    expect(close!.dataset.action).toBe('back-to-banner');
+  });
+
+  it('clicking the close button returns to the banner view without recording a choice', () => {
+    const onConsent = vi.fn();
+    const el = mountBanner(baseConfig({ onConsent }));
+    el.openSettings();
+
+    const close = el.shadowRoot?.querySelector<HTMLButtonElement>('.km-modal__close');
+    close!.click();
+
+    expect(onConsent).not.toHaveBeenCalled();
+    expect(el.shadowRoot?.querySelector('.km-modal')).toBeNull();
+    expect(el.shadowRoot?.querySelector('.km-banner')).not.toBeNull();
+  });
+
+  it('localises the modal close-button label when the IT translations are picked', () => {
+    const el = mountBanner(baseConfig({ lang: 'it' }));
+    el.openSettings();
+
+    const close = el.shadowRoot?.querySelector<HTMLButtonElement>('.km-modal__close');
+    expect(close!.getAttribute('aria-label')).toMatch(/chiudi/i);
+  });
+});
