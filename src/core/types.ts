@@ -268,6 +268,18 @@ export interface KeksmeisterConfig {
    * serving Italian visitors, enable this option. Default: `false`.
    */
   closeAsReject?: boolean;
+  /**
+   * If true, reload the page after the user withdraws consent (via
+   * `revokeAll()`) or downgrades a previously accepted category to
+   * declined. Already-loaded third-party scripts (analytics, ads, ...)
+   * cannot be unloaded from a running page — a reload is the standard
+   * industry remedy to actually stop them from running, since
+   * `ScriptBlocker` can only prevent scripts from loading in the first
+   * place, not tear down ones already active. Never triggered by first
+   * consent or "accept all", since nothing needs to be torn down there.
+   * Default: `false`.
+   */
+  reloadOnRevoke?: boolean;
 }
 
 /**
