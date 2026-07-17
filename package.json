@@ -3,6 +3,12 @@
   "version": "0.7.0",
   "description": "A modern, framework-agnostic cookie consent Web Component with Shadow DOM encapsulation. Built for GDPR/DSGVO compliance.",
   "type": "module",
+  "sideEffects": [
+    "./dist/keksmeister.js",
+    "./dist/keksmeister.umd.cjs",
+    "./dist/index.js",
+    "./dist/wrappers/react.js"
+  ],
   "main": "./dist/keksmeister.umd.cjs",
   "module": "./dist/keksmeister.js",
   "types": "./dist/index.d.ts",
