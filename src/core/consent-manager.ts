@@ -71,42 +71,42 @@ function generateId(): string {
  *   manager.isAccepted('analytics'); // true
  */
 export class ConsentManager extends EventTarget {
-  private config: KeksmeisterConfig;
+  #config: KeksmeisterConfig;
   private store: CookieStore;
-  private choices: ConsentChoices = {};
-  private _hasConsented = false;
+  #choices: ConsentChoices = {};
+  #hasConsented = false;
   private subjectId: string | undefined;
-  private logger: ConsentLogger | undefined;
+  #logger: ConsentLogger | undefined;
 
   constructor(config: KeksmeisterConfig) {
     super();
-    this.config = config;
+    this.#config = config;
     this.store = new CookieStore({
       cookieName: config.cookieName,
       cookieLifetimeDays: config.cookieLifetimeDays,
       cookieDomain: config.cookieDomain,
     });
     if (config.logging) {
-      this.logger = new ConsentLogger(config.logging);
+      this.#logger = new ConsentLogger(config.logging);
     }
-    this.restore();
+    this.#restore();
   }
 
   /** Whether the user has made any consent choice (accept, reject, or custom). */
   get hasConsented(): boolean {
-    return this._hasConsented;
+    return this.#hasConsented;
   }
 
   /** Whether the stored consent matches the current config revision. */
   get isConsentCurrent(): boolean {
     const record = this.store.read();
     if (!record) return false;
-    return record.revision === this.getRevision();
+    return record.revision === this.#getRevision();
   }
 
   /** Returns true if the banner should be shown (no consent, outdated revision, or expired). */
   get shouldShowBanner(): boolean {
-    if (!this._hasConsented || !this.isConsentCurrent) return true;
+    if (!this.#hasConsented || !this.isConsentCurrent) return true;
     if (this.isConsentExpired) return true;
     return false;
   }
@@ -126,7 +126,7 @@ export class ConsentManager extends EventTarget {
    *   a corrupted cookie can't suppress the banner.
    */
   get isConsentExpired(): boolean {
-    const configured = this.config.consentMaxAgeDays;
+    const configured = this.#config.consentMaxAgeDays;
     const maxAgeDays =
       configured === 0
         ? 0
@@ -146,7 +146,7 @@ export class ConsentManager extends EventTarget {
 
   /** Whether this instance uses opt-out mode (CCPA). */
   get isOptOut(): boolean {
-    return this.config.mode === 'opt-out';
+    return this.#config.mode === 'opt-out';
   }
 
   /**
@@ -156,56 +156,56 @@ export class ConsentManager extends EventTarget {
    * - In opt-in mode (default), categories default to false until explicitly accepted.
    */
   isAccepted(categoryId: string): boolean {
-    const category = this.config.categories.find((c) => c.id === categoryId);
+    const category = this.#config.categories.find((c) => c.id === categoryId);
     if (category?.required) return true;
-    if (this.choices[categoryId] !== undefined) return this.choices[categoryId];
+    if (this.#choices[categoryId] !== undefined) return this.#choices[categoryId];
     // No explicit choice yet — default depends on mode
     return this.isOptOut;
   }
 
   /** Get a snapshot of all current choices. */
   getChoices(): ConsentChoices {
-    return { ...this.choices };
+    return { ...this.#choices };
   }
 
   /** Accept all categories. */
   acceptAll(): void {
     const choices: ConsentChoices = {};
-    for (const cat of this.config.categories) {
+    for (const cat of this.#config.categories) {
       choices[cat.id] = true;
     }
-    this.applyChoices(choices, 'accept-all');
+    this.#applyChoices(choices, 'accept-all');
   }
 
   /** Reject all non-required categories. */
   rejectAll(): void {
     const choices: ConsentChoices = {};
-    for (const cat of this.config.categories) {
+    for (const cat of this.#config.categories) {
       choices[cat.id] = cat.required === true;
     }
-    this.applyChoices(choices, 'reject-all');
+    this.#applyChoices(choices, 'reject-all');
   }
 
   /** Apply custom category choices from the settings modal. */
   saveCustom(choices: ConsentChoices): void {
     // Ensure required categories cannot be declined
     const sanitized: ConsentChoices = {};
-    for (const cat of this.config.categories) {
+    for (const cat of this.#config.categories) {
       sanitized[cat.id] = cat.required ? true : (choices[cat.id] ?? false);
     }
-    this.applyChoices(sanitized, 'custom');
+    this.#applyChoices(sanitized, 'custom');
   }
 
   /** Programmatically revoke consent and clear the cookie. */
   revokeAll(): void {
     const choices: ConsentChoices = {};
-    for (const cat of this.config.categories) {
+    for (const cat of this.#config.categories) {
       choices[cat.id] = cat.required === true;
     }
 
     const record: ConsentRecord = {
       timestamp: new Date().toISOString(),
-      revision: this.getRevision(),
+      revision: this.#getRevision(),
       choices,
       method: 'revoke',
       action: 'revoke',
@@ -213,24 +213,24 @@ export class ConsentManager extends EventTarget {
     };
 
     // Log the withdrawal as part of the audit trail before clearing state.
-    this.logger?.log(record);
+    this.#logger?.log(record);
 
-    this.choices = {};
-    this._hasConsented = false;
+    this.#choices = {};
+    this.#hasConsented = false;
     this.subjectId = undefined;
     this.store.clear();
 
-    this.dispatch('keksmeister:revoke', { categoryId: '*' });
+    this.#dispatch('keksmeister:revoke', { categoryId: '*' });
   }
 
   /** Get all configured categories. */
   getCategories(): ConsentCategory[] {
-    return this.config.categories;
+    return this.#config.categories;
   }
 
   /** Update the config (e.g. after language change). */
   updateConfig(config: Partial<KeksmeisterConfig>): void {
-    Object.assign(this.config, config);
+    Object.assign(this.#config, config);
   }
 
   /**
@@ -246,15 +246,15 @@ export class ConsentManager extends EventTarget {
   getConfigSnapshot(opts?: {
     translations?: KeksmeisterTranslations;
   }): ConsentConfigSnapshot {
-    const langValue = this.config.lang;
+    const langValue = this.#config.lang;
     const snapshot: ConsentConfigSnapshot = {
-      revision: this.getRevision(),
+      revision: this.#getRevision(),
       capturedAt: new Date().toISOString(),
-      categories: deepClone(this.config.categories),
-      privacyUrl: this.config.privacyUrl,
+      categories: deepClone(this.#config.categories),
+      privacyUrl: this.#config.privacyUrl,
     };
-    if (this.config.imprintUrl !== undefined) {
-      snapshot.imprintUrl = this.config.imprintUrl;
+    if (this.#config.imprintUrl !== undefined) {
+      snapshot.imprintUrl = this.#config.imprintUrl;
     }
     if (typeof langValue === 'string') snapshot.lang = langValue;
     const resolved =
@@ -269,37 +269,37 @@ export class ConsentManager extends EventTarget {
    * configured.
    */
   sendConfigSnapshot(snapshot?: ConsentConfigSnapshot): void {
-    if (!this.logger) return;
-    this.logger.logSnapshot(snapshot ?? this.getConfigSnapshot());
+    if (!this.#logger) return;
+    this.#logger.logSnapshot(snapshot ?? this.getConfigSnapshot());
   }
 
   // --- Private ---
 
-  private restore(): void {
+  #restore(): void {
     const record = this.store.read();
     if (!record) return;
     // Recover the pseudonymous id even across a revision bump, so re-consent on
     // the same browser stays tied to the same subject in the audit trail.
     this.subjectId = record.subjectId;
-    if (record.revision === this.getRevision()) {
-      this.choices = record.choices;
-      this._hasConsented = true;
+    if (record.revision === this.#getRevision()) {
+      this.#choices = record.choices;
+      this.#hasConsented = true;
     }
   }
 
-  private applyChoices(
+  #applyChoices(
     choices: ConsentChoices,
     method: ConsentRecord['method']
   ): void {
-    const previousChoices = { ...this.choices };
-    const action: ConsentRecord['action'] = this._hasConsented ? 'update' : 'grant';
-    this.choices = choices;
-    this._hasConsented = true;
+    const previousChoices = { ...this.#choices };
+    const action: ConsentRecord['action'] = this.#hasConsented ? 'update' : 'grant';
+    this.#choices = choices;
+    this.#hasConsented = true;
     this.subjectId ??= generateId();
 
     const record: ConsentRecord = {
       timestamp: new Date().toISOString(),
-      revision: this.getRevision(),
+      revision: this.#getRevision(),
       choices,
       method,
       action,
@@ -309,33 +309,33 @@ export class ConsentManager extends EventTarget {
     this.store.write(record);
 
     // Auto-clear cookies for newly declined categories
-    if (this.config.autoClearCookies !== false) {
-      this.autoClear(previousChoices, choices);
+    if (this.#config.autoClearCookies !== false) {
+      this.#autoClear(previousChoices, choices);
     }
 
     // Fire callback
-    this.config.onConsent?.(record);
+    this.#config.onConsent?.(record);
 
     // Server-side logging (grant/update)
-    this.logger?.log(record);
+    this.#logger?.log(record);
 
     // Dispatch DOM event
-    this.dispatch('keksmeister:consent', record);
+    this.#dispatch('keksmeister:consent', record);
 
     // Update Google Consent Mode if enabled
-    if (this.config.googleConsentMode) {
-      this.updateGoogleConsentMode(choices);
+    if (this.#config.googleConsentMode) {
+      this.#updateGoogleConsentMode(choices);
     }
 
     // Push to GTM dataLayer if available
-    this.pushToDataLayer(record);
+    this.#pushToDataLayer(record);
   }
 
-  private autoClear(
+  #autoClear(
     previous: ConsentChoices,
     current: ConsentChoices
   ): void {
-    for (const cat of this.config.categories) {
+    for (const cat of this.#config.categories) {
       if (previous[cat.id] !== false && !current[cat.id] && cat.services) {
         const cookieNames = cat.services.flatMap((s) => s.cookies ?? []);
         if (cookieNames.length > 0) {
@@ -345,13 +345,13 @@ export class ConsentManager extends EventTarget {
     }
   }
 
-  private updateGoogleConsentMode(choices: ConsentChoices): void {
+  #updateGoogleConsentMode(choices: ConsentChoices): void {
     const gtag = (globalThis as Record<string, unknown>)['gtag'] as
       | ((...args: unknown[]) => void)
       | undefined;
     if (typeof gtag !== 'function') return;
 
-    const m = this.config.googleConsentModeMapping;
+    const m = this.#config.googleConsentModeMapping;
     const analyticsCategory = m?.analytics_storage ?? 'analytics';
     const marketingCategory = m?.ad_storage ?? 'marketing';
     const adUserDataCategory = m?.ad_user_data ?? marketingCategory;
@@ -367,7 +367,7 @@ export class ConsentManager extends EventTarget {
     });
   }
 
-  private pushToDataLayer(record: ConsentRecord): void {
+  #pushToDataLayer(record: ConsentRecord): void {
     const w = globalThis as Record<string, unknown>;
     if (!Array.isArray(w.dataLayer)) return;
 
@@ -382,11 +382,11 @@ export class ConsentManager extends EventTarget {
     });
   }
 
-  private getRevision(): string {
-    return this.config.revision ?? '1';
+  #getRevision(): string {
+    return this.#config.revision ?? '1';
   }
 
-  private dispatch(name: string, detail: unknown): void {
+  #dispatch(name: string, detail: unknown): void {
     this.dispatchEvent(new CustomEvent(name, { detail }));
   }
 }

@@ -31,13 +31,13 @@ export class KeksmeisterTrigger extends HTMLElement {
   static readonly tagName = 'keksmeister-trigger';
   static readonly observedAttributes = ['variant', 'position', 'label', 'lang', 'banner-selector'];
 
-  private static readonly _variantCSS: Record<string, string> = {
+  static readonly #variantCSS: Record<string, string> = {
     icon: iconStyles,
     text: textStyles,
     slot: slotStyles,
   };
 
-  private _hasSlottedContent = false;
+  #hasSlottedContent = false;
 
   constructor() {
     super();
@@ -45,42 +45,42 @@ export class KeksmeisterTrigger extends HTMLElement {
   }
 
   connectedCallback(): void {
-    this._hasSlottedContent = this.hasChildNodes() && this.innerHTML.trim().length > 0;
-    this.render();
+    this.#hasSlottedContent = this.hasChildNodes() && this.innerHTML.trim().length > 0;
+    this.#render();
   }
 
   attributeChangedCallback(): void {
     if (!this.isConnected) return;
-    this.render();
+    this.#render();
   }
 
-  private resolveLabel(): string {
+  #resolveLabel(): string {
     const explicit = this.getAttribute('label');
     if (explicit) return explicit;
     const translations = resolveTranslations(detectLanguage(this));
     return translations.trigger?.label ?? 'Cookie-Einstellungen';
   }
 
-  private resolveVariant(): 'icon' | 'text' | 'slot' {
-    if (this._hasSlottedContent) return 'slot';
+  #resolveVariant(): 'icon' | 'text' | 'slot' {
+    if (this.#hasSlottedContent) return 'slot';
     return this.getAttribute('variant') === 'text' ? 'text' : 'icon';
   }
 
-  private render(): void {
+  #render(): void {
     if (!this.shadowRoot) return;
 
-    const variant = this.resolveVariant();
-    const label = this.resolveLabel();
+    const variant = this.#resolveVariant();
+    const label = this.#resolveLabel();
 
     // Icon position via CSS class on the host
     this.classList.toggle('km-right', variant === 'icon' && this.getAttribute('position') === 'bottom-right');
 
     const style = document.createElement('style');
-    style.textContent = baseStyles + KeksmeisterTrigger._variantCSS[variant];
+    style.textContent = baseStyles + KeksmeisterTrigger.#variantCSS[variant];
 
     const button = document.createElement('button');
     button.setAttribute('type', 'button');
-    button.addEventListener('click', () => this.openBanner());
+    button.addEventListener('click', () => this.#openBanner());
 
     if (variant === 'text') {
       const icon = document.createElement('span');
@@ -102,7 +102,7 @@ export class KeksmeisterTrigger extends HTMLElement {
     this.shadowRoot.replaceChildren(style, button);
   }
 
-  private openBanner(): void {
+  #openBanner(): void {
     const selector = this.getAttribute('banner-selector') ?? 'keksmeister-banner';
     const banner = document.querySelector(selector) as HTMLElement & { openSettings?: () => void } | null;
     if (banner?.openSettings) {
