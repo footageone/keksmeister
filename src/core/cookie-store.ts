@@ -56,10 +56,19 @@ export class CookieStore {
 
   /** Delete specific cookies by name (used for auto-clear on revocation). */
   clearCookies(names: string[]): void {
+    // Third-party scripts (e.g. GA4's `_ga`) commonly scope their cookies to
+    // a `domain=` attribute (`.example.com`). Deleting without a matching
+    // domain silently no-ops, so retry across the current hostname and its
+    // parent domains in addition to the plain, path-only attempt.
+    const domainVariants = this.hostnameDomainVariants();
+
     for (const name of names) {
       this.setCookie(name, '', -1);
       // Also try clearing with common path variations
       this.setCookie(name, '', -1, '/');
+      for (const domain of domainVariants) {
+        this.setCookie(name, '', -1, '/', domain);
+      }
     }
   }
 
@@ -79,7 +88,8 @@ export class CookieStore {
     name: string,
     value: string,
     days: number,
-    path = '/'
+    path = '/',
+    domain?: string
   ): void {
     const parts = [
       `${name}=${encodeURIComponent(value)}`,
@@ -94,8 +104,11 @@ export class CookieStore {
       parts.push('expires=Thu, 01 Jan 1970 00:00:00 GMT');
     }
 
-    if (this.domain) {
-      parts.push(`domain=${this.domain}`);
+    // An explicit override (e.g. a domain variant tried during cookie
+    // clearing) takes precedence over the configured domain.
+    const effectiveDomain = domain ?? this.domain;
+    if (effectiveDomain) {
+      parts.push(`domain=${effectiveDomain}`);
     }
 
     // Set Secure flag when on HTTPS
@@ -104,6 +117,25 @@ export class CookieStore {
     }
 
     document.cookie = parts.join('; ');
+  }
+
+  /**
+   * Candidate `domain=` values for cookie deletion: the current hostname
+   * (with a leading dot) plus each parent domain down to 2 labels, e.g.
+   * `app.www.example.com` -> `.app.www.example.com`, `.www.example.com`,
+   * `.example.com`. Returns an empty list outside a browser (no
+   * `location`).
+   */
+  private hostnameDomainVariants(): string[] {
+    const hostname = globalThis.location?.hostname;
+    if (!hostname) return [];
+
+    const labels = hostname.split('.');
+    const variants = [`.${hostname}`];
+    for (let i = 1; i < labels.length - 1; i++) {
+      variants.push(`.${labels.slice(i).join('.')}`);
+    }
+    return variants;
   }
 
   private escapeRegex(str: string): string {
