@@ -198,6 +198,7 @@ export class ConsentManager extends EventTarget {
 
   /** Programmatically revoke consent and clear the cookie. */
   revokeAll(): void {
+    const previousChoices = { ...this.choices };
     const choices: ConsentChoices = {};
     for (const cat of this.config.categories) {
       choices[cat.id] = cat.required === true;
@@ -219,6 +220,14 @@ export class ConsentManager extends EventTarget {
     this._hasConsented = false;
     this.subjectId = undefined;
     this.store.clear();
+
+    // Notify per-category revocations for everything that was previously
+    // accepted. Required categories can't be revoked, so they're excluded.
+    for (const cat of this.config.categories) {
+      if (previousChoices[cat.id] === true && !cat.required) {
+        this.config.onRevoke?.(cat.id);
+      }
+    }
 
     this.dispatch('keksmeister:revoke', { categoryId: '*' });
   }
@@ -319,6 +328,13 @@ export class ConsentManager extends EventTarget {
 
     // Fire callback
     this.config.onConsent?.(record);
+
+    // Notify per-category revocations (previously accepted, now declined)
+    for (const cat of this.config.categories) {
+      if (previousChoices[cat.id] === true && !choices[cat.id]) {
+        this.config.onRevoke?.(cat.id);
+      }
+    }
 
     // Server-side logging (grant/update)
     this.logger?.log(record);

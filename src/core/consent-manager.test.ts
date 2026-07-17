@@ -165,6 +165,80 @@ describe('ConsentManager', () => {
     });
   });
 
+  describe('onRevoke callback', () => {
+    it('is not called on first consent grant', () => {
+      const onRevoke = vi.fn();
+      const manager = new ConsentManager(createConfig({ onRevoke }));
+      manager.acceptAll();
+
+      expect(onRevoke).not.toHaveBeenCalled();
+    });
+
+    it('is not called when a category stays accepted across updates', () => {
+      const onRevoke = vi.fn();
+      const manager = new ConsentManager(createConfig({ onRevoke }));
+      manager.acceptAll();
+      manager.saveCustom({ essential: true, analytics: true, marketing: false });
+
+      // analytics stayed accepted; only marketing was revoked.
+      expect(onRevoke).toHaveBeenCalledExactlyOnceWith('marketing');
+    });
+
+    it('fires once per newly declined category via saveCustom', () => {
+      const onRevoke = vi.fn();
+      const manager = new ConsentManager(createConfig({ onRevoke }));
+      manager.acceptAll();
+      manager.saveCustom({ essential: true, analytics: false, marketing: false });
+
+      expect(onRevoke).toHaveBeenCalledTimes(2);
+      expect(onRevoke).toHaveBeenCalledWith('analytics');
+      expect(onRevoke).toHaveBeenCalledWith('marketing');
+    });
+
+    it('fires for every previously accepted category via rejectAll', () => {
+      const onRevoke = vi.fn();
+      const manager = new ConsentManager(createConfig({ onRevoke }));
+      manager.acceptAll();
+      manager.rejectAll();
+
+      expect(onRevoke).toHaveBeenCalledTimes(2);
+      expect(onRevoke).toHaveBeenCalledWith('analytics');
+      expect(onRevoke).toHaveBeenCalledWith('marketing');
+    });
+
+    it('is not called for required categories', () => {
+      const onRevoke = vi.fn();
+      const manager = new ConsentManager(createConfig({ onRevoke }));
+      manager.acceptAll();
+      manager.rejectAll();
+
+      expect(onRevoke).not.toHaveBeenCalledWith('essential');
+    });
+
+    it('fires via revokeAll for every previously accepted, non-required category', () => {
+      const onRevoke = vi.fn();
+      const manager = new ConsentManager(createConfig({ onRevoke }));
+      manager.acceptAll();
+      onRevoke.mockClear();
+
+      manager.revokeAll();
+
+      expect(onRevoke).toHaveBeenCalledTimes(2);
+      expect(onRevoke).toHaveBeenCalledWith('analytics');
+      expect(onRevoke).toHaveBeenCalledWith('marketing');
+      expect(onRevoke).not.toHaveBeenCalledWith('essential');
+    });
+
+    it('does not fire via revokeAll when nothing was accepted yet', () => {
+      const onRevoke = vi.fn();
+      const manager = new ConsentManager(createConfig({ onRevoke }));
+
+      manager.revokeAll();
+
+      expect(onRevoke).not.toHaveBeenCalled();
+    });
+  });
+
   describe('getChoices', () => {
     it('returns a snapshot of current choices', () => {
       const manager = new ConsentManager(createConfig());
