@@ -295,6 +295,47 @@ The Belgian story is the IAB TCF saga, now substantially clarified:
 - For Keksmeister: no changes are required for UK-only traffic. If you run
   a single banner for EU + UK visitors, design to the stricter rule (DSGVO).
 
+## Layer-1 button parity — when "accept" and "reject" need identical styling
+
+By default the banner (Layer 1) styles "Accept all" as ``km-btn--primary``
+and "Reject all" as ``km-btn--secondary`` — two distinct solid fills
+(``--km-primary`` / ``--km-primary-text`` vs. ``--km-secondary`` /
+``--km-secondary-text``). Both are same-size, same-weight, solid buttons on
+Layer 1 — no bare text link, no buried settings-only reject — which is
+enough for **most** DPAs covered above: the EU-consensus requirement is
+"equally easy", not "identically coloured".
+
+The **strictest** national readings go further and demand equal *colour*,
+not just equal size and prominence:
+
+- 🇮🇹 Italy — Garante Provv. 231 requires "comandi e caratteri di uguali
+  dimensioni, enfasi **e colori**" (equal size, emphasis, **and colour**).
+- 🇫🇷 France — CNIL's "same degree of simplicity" language has, in the
+  strictest audits, been read to include colour parity, not just control
+  type.
+- 🇩🇪 Germany — some DSK-OH Rn. 135 audits interpret "gleichwertig" (equal
+  value/weight) as extending to colour, though the Orientierungshilfe text
+  itself does not mandate identical colour.
+
+Note that the settings modal (Layer 2) already ships both buttons as
+``km-btn--secondary`` — Accept and Reject there are colour-identical out of
+the box. Only the Layer-1 banner uses the primary/secondary split.
+
+If you serve Italian, French, or risk-averse German traffic and want to
+remove this ambiguity entirely, override the CSS custom properties so the
+banner's Reject button inherits the same colours as Accept:
+
+```css
+keksmeister-banner {
+  --km-secondary: var(--km-primary);
+  --km-secondary-text: var(--km-primary-text);
+}
+```
+
+This only changes the banner's Reject button colour (and, incidentally,
+the close-as-reject icon, which also reads ``--km-secondary`` on hover) —
+it does not affect the modal, where both buttons already match.
+
 ## Consent or Pay (EDPB Opinion 08/2024)
 
 This section is **context, not a Keksmeister feature**. Keksmeister is a

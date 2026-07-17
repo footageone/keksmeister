@@ -324,6 +324,14 @@ keksmeister-banner {
 }
 ```
 
+By default, the banner's "Accept all" (`--km-primary`) and "Reject all"
+(`--km-secondary`) buttons use different fill colours. Most DPAs accept
+this, but the strictest CNIL/Garante readings expect identical colour, not
+just identical size — see
+[Layer-1 button parity](docs/compliance.md#layer-1-button-parity--when-accept-and-reject-need-identical-styling)
+in the compliance guide for how to equalize them with `--km-secondary` /
+`--km-secondary-text`.
+
 ### Re-open Settings
 
 ```html
