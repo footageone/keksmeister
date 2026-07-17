@@ -16,23 +16,23 @@ export interface CookieStoreOptions {
  * the consent choices, revision, and timestamp.
  */
 export class CookieStore {
-  private name: string;
-  private lifetimeDays: number;
-  private domain: string | undefined;
+  #name: string;
+  #lifetimeDays: number;
+  #domain: string | undefined;
 
   constructor(options: CookieStoreOptions = {}) {
-    this.name = options.cookieName ?? DEFAULT_COOKIE_NAME;
-    this.lifetimeDays = options.cookieLifetimeDays ?? DEFAULT_LIFETIME_DAYS;
+    this.#name = options.cookieName ?? DEFAULT_COOKIE_NAME;
+    this.#lifetimeDays = options.cookieLifetimeDays ?? DEFAULT_LIFETIME_DAYS;
 
     if (options.cookieDomain && /[;\s=]/.test(options.cookieDomain)) {
       throw new Error(`[keksmeister] Invalid cookieDomain: "${options.cookieDomain}"`);
     }
-    this.domain = options.cookieDomain;
+    this.#domain = options.cookieDomain;
   }
 
   /** Read the stored consent record, or null if none exists. */
   read(): ConsentRecord | null {
-    const raw = this.getCookie(this.name);
+    const raw = this.#getCookie(this.#name);
     if (!raw) return null;
 
     try {
@@ -46,20 +46,20 @@ export class CookieStore {
   /** Write a consent record to the cookie. */
   write(record: ConsentRecord): void {
     const encoded = btoa(JSON.stringify(record));
-    this.setCookie(this.name, encoded, this.lifetimeDays);
+    this.#setCookie(this.#name, encoded, this.#lifetimeDays);
   }
 
   /** Remove the consent cookie. */
   clear(): void {
-    this.setCookie(this.name, '', -1);
+    this.#setCookie(this.#name, '', -1);
   }
 
   /** Delete specific cookies by name (used for auto-clear on revocation). */
   clearCookies(names: string[]): void {
     for (const name of names) {
-      this.setCookie(name, '', -1);
+      this.#setCookie(name, '', -1);
       // Also try clearing with common path variations
-      this.setCookie(name, '', -1, '/');
+      this.#setCookie(name, '', -1, '/');
     }
   }
 
@@ -68,14 +68,14 @@ export class CookieStore {
     return this.read()?.choices ?? {};
   }
 
-  private getCookie(name: string): string | null {
+  #getCookie(name: string): string | null {
     const match = document.cookie.match(
-      new RegExp(`(?:^|;\\s*)${this.escapeRegex(name)}=([^;]*)`)
+      new RegExp(`(?:^|;\\s*)${this.#escapeRegex(name)}=([^;]*)`)
     );
     return match ? decodeURIComponent(match[1]) : null;
   }
 
-  private setCookie(
+  #setCookie(
     name: string,
     value: string,
     days: number,
@@ -94,8 +94,8 @@ export class CookieStore {
       parts.push('expires=Thu, 01 Jan 1970 00:00:00 GMT');
     }
 
-    if (this.domain) {
-      parts.push(`domain=${this.domain}`);
+    if (this.#domain) {
+      parts.push(`domain=${this.#domain}`);
     }
 
     // Set Secure flag when on HTTPS
@@ -106,7 +106,7 @@ export class CookieStore {
     document.cookie = parts.join('; ');
   }
 
-  private escapeRegex(str: string): string {
+  #escapeRegex(str: string): string {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 }
