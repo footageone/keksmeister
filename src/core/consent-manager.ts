@@ -281,7 +281,11 @@ export class ConsentManager extends EventTarget {
     // Recover the pseudonymous id even across a revision bump, so re-consent on
     // the same browser stays tied to the same subject in the audit trail.
     this.subjectId = record.subjectId;
-    if (record.revision === this.getRevision()) {
+    // An expired consent decision must behave like no consent at all: leave
+    // choices empty and _hasConsented false so isAccepted() stays negative
+    // and shouldShowBanner re-prompts, rather than letting stale approval
+    // keep scripts unblocked past the re-prompt window.
+    if (record.revision === this.getRevision() && !this.isConsentExpired) {
       this.choices = record.choices;
       this._hasConsented = true;
     }

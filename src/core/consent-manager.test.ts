@@ -390,6 +390,71 @@ describe('ConsentManager', () => {
       expect(m2.isConsentExpired).toBe(true);
       expect(m2.shouldShowBanner).toBe(true);
     });
+
+    it('treats expired consent as no consent at all (default 180-day window)', () => {
+      const config = createConfig();
+      const manager1 = new ConsentManager(config);
+      manager1.acceptAll();
+      const originalSubjectId = manager1['subjectId'];
+
+      // Push the stored decision past the implicit 180-day window.
+      const store = manager1['store'];
+      const record = store.read()!;
+      record.timestamp = new Date(Date.now() - 181 * 864e5).toISOString();
+      store.write(record);
+
+      const manager2 = new ConsentManager(config);
+      // Expired consent must not silently keep tracking scripts unblocked.
+      expect(manager2.isAccepted('analytics')).toBe(false);
+      expect(manager2.isAccepted('marketing')).toBe(false);
+      expect(manager2.hasConsented).toBe(false);
+      expect(manager2.shouldShowBanner).toBe(true);
+      expect(manager2.getChoices()).toEqual({});
+
+      // The pseudonymous subject id must survive re-consent for audit continuity.
+      const onConsent = vi.fn();
+      manager2.updateConfig({ onConsent });
+      manager2.acceptAll();
+      const newRecord: ConsentRecord = onConsent.mock.calls[0][0];
+      expect(newRecord.subjectId).toBe(originalSubjectId);
+    });
+
+    it('restores consent normally when still within the re-prompt window', () => {
+      const config = createConfig({ consentMaxAgeDays: 180 });
+      const manager1 = new ConsentManager(config);
+      manager1.acceptAll();
+
+      const store = manager1['store'];
+      const record = store.read()!;
+      record.timestamp = new Date(Date.now() - 90 * 864e5).toISOString();
+      store.write(record);
+
+      const manager2 = new ConsentManager(config);
+      expect(manager2.hasConsented).toBe(true);
+      expect(manager2.isAccepted('analytics')).toBe(true);
+      expect(manager2.shouldShowBanner).toBe(false);
+    });
+
+    it('restores old consent unchanged when consentMaxAgeDays is 0 (expiry disabled)', () => {
+      const config = createConfig({ consentMaxAgeDays: 0 });
+      const manager1 = new ConsentManager(config);
+      manager1.acceptAll();
+
+      const store = manager1['store'];
+      const record = store.read()!;
+      record.timestamp = new Date(Date.now() - 5 * 365 * 864e5).toISOString();
+      store.write(record);
+
+      const manager2 = new ConsentManager(config);
+      expect(manager2.hasConsented).toBe(true);
+      expect(manager2.isAccepted('analytics')).toBe(true);
+      expect(manager2.shouldShowBanner).toBe(false);
+      expect(manager2.getChoices()).toEqual({
+        essential: true,
+        analytics: true,
+        marketing: true,
+      });
+    });
   });
 
   describe('opt-out mode', () => {
