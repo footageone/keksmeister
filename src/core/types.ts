@@ -189,6 +189,11 @@ export interface KeksmeisterTranslations {
     rejectAll: string;
     /** Label shown on required categories (default: "Always active" / "Immer aktiv") */
     alwaysActive?: string;
+    /**
+     * Accessible label for the visible close (×) button that returns to the
+     * banner view. Default: "Close".
+     */
+    close?: string;
   };
   /** Label for the privacy policy link */
   privacyLink?: string;
@@ -268,6 +273,18 @@ export interface KeksmeisterConfig {
    * serving Italian visitors, enable this option. Default: `false`.
    */
   closeAsReject?: boolean;
+  /**
+   * If true, reload the page after the user withdraws consent (via
+   * `revokeAll()`) or downgrades a previously accepted category to
+   * declined. Already-loaded third-party scripts (analytics, ads, ...)
+   * cannot be unloaded from a running page — a reload is the standard
+   * industry remedy to actually stop them from running, since
+   * `ScriptBlocker` can only prevent scripts from loading in the first
+   * place, not tear down ones already active. Never triggered by first
+   * consent or "accept all", since nothing needs to be torn down there.
+   * Default: `false`.
+   */
+  reloadOnRevoke?: boolean;
 }
 
 /**
