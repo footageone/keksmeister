@@ -64,6 +64,23 @@ covered by the matched solid fills on accept and reject buttons; per-purpose
 granularity by the toggle-per-category modal; withdrawal by the
 ``<keksmeister-trigger>`` element.
 
+## `mode: 'opt-out'` — CCPA/US only, unlawful for EU/EEA visitors
+
+> **⚠️ EU/EEA warning.** ``mode: 'opt-out'`` activates every non-essential
+> category by default and only lets the visitor withdraw afterwards. That
+> default-active behaviour is exactly what **CCPA/CPRA-style** "right to
+> opt out of sale" regimes expect — but it is **unlawful under DSGVO
+> Art. 6(1)(a) + ErwGr 32 and ePrivacy Directive Art. 5(3)**, both of which
+> require *prior, opt-in* consent before any non-essential cookie is set.
+> Every DPA in the "EU consensus" table above enforces the opt-in default;
+> the UK's PECR mirrors the same rule. **Never set `mode: 'opt-out'` for
+> visitors in the EU/EEA (or the UK).** It is intended purely for CCPA-style
+> jurisdictions — e.g. a US-only deployment, or one gated behind a geo-IP
+> check that keeps EU/EEA traffic on `mode: 'opt-in'` (the library default).
+> Setting it globally on a site with EU/EEA visitors turns every page load
+> into cookies-before-consent — the single most commonly enforced violation
+> across every DPA covered in this document.
+
 ## National variations — when the strict reading matters
 
 ### 🇫🇷 France (CNIL)
