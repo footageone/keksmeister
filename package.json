@@ -89,7 +89,7 @@
     "@commitlint/config-conventional": "21.2.0",
     "@vitest/browser": "4.1.10",
     "@vitest/coverage-v8": "4.1.10",
-    "happy-dom": "20.10.6",
+    "happy-dom": "20.11.0",
     "husky": "9.1.7",
     "marked": "18.0.6",
     "terser": "5.49.0",
