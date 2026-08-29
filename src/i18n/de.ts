@@ -19,6 +19,7 @@ export const de: KeksmeisterTranslations = {
     acceptAll: 'Alle akzeptieren',
     rejectAll: 'Alle ablehnen',
     alwaysActive: 'Immer aktiv',
+    close: 'Schließen',
   },
   privacyLink: 'Datenschutzerklärung',
   trigger: { label: 'Cookie-Einstellungen' },

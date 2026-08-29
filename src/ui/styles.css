@@ -188,6 +188,7 @@
 }
 
 .km-modal {
+  position: relative;
   background: var(--km-bg);
   border-radius: var(--km-radius);
   max-width: 600px;
@@ -197,6 +198,36 @@
   padding: var(--km-padding);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
   animation: km-scale-in var(--km-transition);
+}
+
+/* Visible close (×) control for the settings modal — mirrors
+   .km-banner__close so both close affordances feel consistent. */
+.km-modal__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+  background: transparent;
+  border: 1px solid var(--km-border);
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--km-text);
+  padding: 0;
+}
+
+.km-modal__close:hover {
+  background: var(--km-secondary);
+}
+
+.km-modal__close:focus-visible {
+  outline: 2px solid var(--km-primary);
+  outline-offset: 2px;
 }
 
 .km-modal__title {

@@ -221,6 +221,11 @@ export class ConsentManager extends EventTarget {
     this.store.clear();
 
     this.dispatch('keksmeister:revoke', { categoryId: '*' });
+
+    // Already-loaded third-party scripts can't be unloaded — reload to
+    // actually stop them. Runs last: the logger above uses sendBeacon /
+    // keepalive fetch, both designed to survive the navigation.
+    this.reloadPage();
   }
 
   /** Get all configured categories. */
@@ -329,6 +334,16 @@ export class ConsentManager extends EventTarget {
 
     // Push to GTM dataLayer if available
     this.pushToDataLayer(record);
+
+    // If a previously accepted category was just declined, already-loaded
+    // scripts for it may still be running. Reload to stop them — but never
+    // on first consent or "accept all", where no category can be downgraded.
+    const downgraded = Object.keys(previousChoices).some(
+      (categoryId) => previousChoices[categoryId] === true && choices[categoryId] === false
+    );
+    if (downgraded) {
+      this.reloadPage();
+    }
   }
 
   private autoClear(
@@ -388,5 +403,11 @@ export class ConsentManager extends EventTarget {
 
   private dispatch(name: string, detail: unknown): void {
     this.dispatchEvent(new CustomEvent(name, { detail }));
+  }
+
+  /** Reload the page when `reloadOnRevoke` is enabled. No-op outside a browser. */
+  private reloadPage(): void {
+    if (!this.config.reloadOnRevoke) return;
+    globalThis.location?.reload();
   }
 }
