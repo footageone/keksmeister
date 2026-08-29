@@ -50,7 +50,7 @@
   ],
   "scripts": {
     "dev": "vite serve demo",
-    "build": "vite build && tsc -p tsconfig.build.json && terser dist/keksmeister.js --compress --mangle --source-map \"content=dist/keksmeister.js.map,url=keksmeister.min.js.map\" -o dist/keksmeister.min.js",
+    "build": "vite build && tsc -p tsconfig.build.json && terser dist/keksmeister.js --compress --mangle --source-map \"content=dist/keksmeister.js.map,url=keksmeister.min.js.map\" -o dist/keksmeister.min.js && terser dist/consent-logger.js --compress --mangle --source-map \"content=dist/consent-logger.js.map,url=consent-logger.js.map\" -o dist/consent-logger.js",
     "preview": "vite preview",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
