@@ -30,28 +30,28 @@ export class KeksmeisterBanner extends HTMLElement {
   static readonly tagName = 'keksmeister-banner';
   static readonly observedAttributes = ['privacy-url', 'lang', 'categories', 'revision', 'cookie-name'];
 
-  private _manager: ConsentManager | null = null;
-  private blocker: ScriptBlocker | null = null;
-  private translations!: KeksmeisterTranslations;
-  private _config: KeksmeisterConfig | null = null;
-  private _view: 'banner' | 'modal' | 'hidden' = 'banner';
-  private previouslyFocusedElement: HTMLElement | null = null;
-  private _listenerAbort: AbortController | null = null;
-  private _configFromAttributes = false;
+  #manager: ConsentManager | null = null;
+  #blocker: ScriptBlocker | null = null;
+  #translations!: KeksmeisterTranslations;
+  #config: KeksmeisterConfig | null = null;
+  #view: 'banner' | 'modal' | 'hidden' = 'banner';
+  #previouslyFocusedElement: HTMLElement | null = null;
+  #listenerAbort: AbortController | null = null;
+  #configFromAttributes = false;
 
   /** Set the full config programmatically. */
   set config(value: KeksmeisterConfig) {
-    this._config = value;
-    this.initialize();
+    this.#config = value;
+    this.#initialize();
   }
 
   get config(): KeksmeisterConfig | null {
-    return this._config;
+    return this.#config;
   }
 
   /** Access the underlying ConsentManager (e.g. for ServiceRegistry). */
   get manager(): ConsentManager | null {
-    return this._manager;
+    return this.#manager;
   }
 
   constructor() {
@@ -60,77 +60,77 @@ export class KeksmeisterBanner extends HTMLElement {
   }
 
   connectedCallback(): void {
-    if (!this._config) {
-      const config = this.buildConfigFromAttributes();
+    if (!this.#config) {
+      const config = this.#buildConfigFromAttributes();
       if (config) {
-        this._config = config;
-        this._configFromAttributes = true;
-        this.initialize();
+        this.#config = config;
+        this.#configFromAttributes = true;
+        this.#initialize();
       }
     }
   }
 
   disconnectedCallback(): void {
-    this.blocker?.stop();
-    this._listenerAbort?.abort();
+    this.#blocker?.stop();
+    this.#listenerAbort?.abort();
   }
 
   attributeChangedCallback(): void {
     // Skip if config was set programmatically (attributes are only the fallback)
-    if (this._config && !this._configFromAttributes) return;
+    if (this.#config && !this.#configFromAttributes) return;
     // Skip if not yet connected to the DOM
     if (!this.isConnected) return;
 
-    const config = this.buildConfigFromAttributes();
+    const config = this.#buildConfigFromAttributes();
     if (config) {
-      this._config = config;
-      this._configFromAttributes = true;
-      this.blocker?.stop();
-      this.initialize();
+      this.#config = config;
+      this.#configFromAttributes = true;
+      this.#blocker?.stop();
+      this.#initialize();
     }
   }
 
   /** Open the settings modal programmatically. */
   openSettings(): void {
-    this.previouslyFocusedElement = document.activeElement as HTMLElement;
-    this._view = 'modal';
-    this.render();
+    this.#previouslyFocusedElement = document.activeElement as HTMLElement;
+    this.#view = 'modal';
+    this.#render();
     this.dispatchEvent(new CustomEvent('keksmeister:open'));
   }
 
   /** Show the banner again (e.g. from a "Cookie Settings" footer link). */
   show(): void {
-    this.previouslyFocusedElement = document.activeElement as HTMLElement;
-    this._view = 'banner';
-    this.render();
+    this.#previouslyFocusedElement = document.activeElement as HTMLElement;
+    this.#view = 'banner';
+    this.#render();
     this.dispatchEvent(new CustomEvent('keksmeister:open'));
   }
 
   // --- Private ---
 
-  private initialize(): void {
-    if (!this._config) return;
+  #initialize(): void {
+    if (!this.#config) return;
 
-    this.translations = resolveTranslations(this._config.lang);
-    this._manager = new ConsentManager(this._config);
-    this.blocker = new ScriptBlocker(this._manager);
-    this.blocker.start();
+    this.#translations = resolveTranslations(this.#config.lang);
+    this.#manager = new ConsentManager(this.#config);
+    this.#blocker = new ScriptBlocker(this.#manager);
+    this.#blocker.start();
 
     // Send the banner-config snapshot once per revision so the actually-rendered
     // texts (after i18n resolution) end up in the audit log (DSK-OH Rn. 85).
-    this._manager.sendConfigSnapshot(
-      this._manager.getConfigSnapshot({ translations: this.translations })
+    this.#manager.sendConfigSnapshot(
+      this.#manager.getConfigSnapshot({ translations: this.#translations })
     );
 
-    this._view = this._manager.shouldShowBanner ? 'banner' : 'hidden';
-    this.render();
+    this.#view = this.#manager.shouldShowBanner ? 'banner' : 'hidden';
+    this.#render();
   }
 
-  private render(): void {
+  #render(): void {
     if (!this.shadowRoot) return;
 
-    this._listenerAbort?.abort();
-    this._listenerAbort = new AbortController();
+    this.#listenerAbort?.abort();
+    this.#listenerAbort = new AbortController();
 
     this.shadowRoot.replaceChildren();
 
@@ -138,18 +138,18 @@ export class KeksmeisterBanner extends HTMLElement {
     styleEl.textContent = bannerStyles;
     this.shadowRoot.appendChild(styleEl);
 
-    switch (this._view) {
+    switch (this.#view) {
       case 'banner':
-        this.shadowRoot.appendChild(this.buildBannerDOM());
+        this.shadowRoot.appendChild(this.#buildBannerDOM());
         this.hidden = false;
-        this.bindBannerEvents();
-        this.focusFirst();
+        this.#bindBannerEvents();
+        this.#focusFirst();
         break;
       case 'modal':
-        this.shadowRoot.appendChild(this.buildModalDOM());
+        this.shadowRoot.appendChild(this.#buildModalDOM());
         this.hidden = false;
-        this.bindModalEvents();
-        this.focusFirst();
+        this.#bindModalEvents();
+        this.#focusFirst();
         break;
       case 'hidden':
         this.hidden = true;
@@ -157,8 +157,8 @@ export class KeksmeisterBanner extends HTMLElement {
     }
   }
 
-  private buildBannerDOM(): HTMLElement {
-    const t = this.translations.banner;
+  #buildBannerDOM(): HTMLElement {
+    const t = this.#translations.banner;
 
     const banner = document.createElement('div');
     banner.className = 'km-banner';
@@ -190,18 +190,18 @@ export class KeksmeisterBanner extends HTMLElement {
     const actions = document.createElement('div');
     actions.className = 'km-banner__actions';
 
-    const acceptBtn = this.createButton(t.acceptAll, 'accept-all', 'km-btn--primary');
-    const rejectBtn = this.createButton(t.rejectAll, 'reject-all', 'km-btn--secondary');
-    const settingsBtn = this.createButton(t.settings, 'settings', 'km-btn--link');
+    const acceptBtn = this.#createButton(t.acceptAll, 'accept-all', 'km-btn--primary');
+    const rejectBtn = this.#createButton(t.rejectAll, 'reject-all', 'km-btn--secondary');
+    const settingsBtn = this.#createButton(t.settings, 'settings', 'km-btn--link');
 
     actions.append(acceptBtn, rejectBtn, settingsBtn);
     inner.appendChild(actions);
 
-    if (this._config?.closeAsReject) {
+    if (this.#config?.closeAsReject) {
       // Italian Garante (Provv. 231): the close affordance must exist AND
       // the banner must say what it does. Both pieces are added together so
       // operators can't accidentally ship the icon without the notice.
-      banner.appendChild(this.buildCloseButton());
+      banner.appendChild(this.#buildCloseButton());
       const hint = document.createElement('p');
       hint.className = 'km-banner__close-hint';
       hint.textContent =
@@ -209,14 +209,14 @@ export class KeksmeisterBanner extends HTMLElement {
       inner.appendChild(hint);
     }
 
-    if (this._config?.privacyUrl) {
+    if (this.#config?.privacyUrl) {
       const privacyDiv = document.createElement('div');
       privacyDiv.className = 'km-privacy-link';
       const link = document.createElement('a');
-      link.href = this._config.privacyUrl;
+      link.href = this.#config.privacyUrl;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
-      link.textContent = this.translations.privacyLink ?? 'Datenschutzerklärung';
+      link.textContent = this.#translations.privacyLink ?? 'Datenschutzerklärung';
       privacyDiv.appendChild(link);
       inner.appendChild(privacyDiv);
     }
@@ -225,8 +225,8 @@ export class KeksmeisterBanner extends HTMLElement {
     return banner;
   }
 
-  private buildCloseButton(): HTMLButtonElement {
-    const t = this.translations.banner;
+  #buildCloseButton(): HTMLButtonElement {
+    const t = this.#translations.banner;
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'km-banner__close';
@@ -239,10 +239,10 @@ export class KeksmeisterBanner extends HTMLElement {
     return btn;
   }
 
-  private buildModalDOM(): HTMLElement {
-    const t = this.translations.modal;
-    const categories = this._manager!.getCategories();
-    const choices = this._manager!.getChoices();
+  #buildModalDOM(): HTMLElement {
+    const t = this.#translations.modal;
+    const categories = this.#manager!.getCategories();
+    const choices = this.#manager!.getChoices();
     const alwaysActiveLabel = t.alwaysActive ?? 'Always active';
 
     const overlay = document.createElement('div');
@@ -278,7 +278,7 @@ export class KeksmeisterBanner extends HTMLElement {
     categoriesContainer.setAttribute('aria-label', t.title);
 
     for (const cat of categories) {
-      const catTranslation = this.translations.categories?.[cat.id];
+      const catTranslation = this.#translations.categories?.[cat.id];
       const label = catTranslation?.label ?? cat.label;
       const description = catTranslation?.description ?? cat.description ?? '';
       const checked = cat.required || choices[cat.id] === true;
@@ -338,7 +338,7 @@ export class KeksmeisterBanner extends HTMLElement {
       }
 
       // Show individual services if configured
-      if (this._config?.showServices && cat.services?.length) {
+      if (this.#config?.showServices && cat.services?.length) {
         const servicesList = document.createElement('ul');
         servicesList.className = 'km-services';
         for (const service of cat.services) {
@@ -376,9 +376,9 @@ export class KeksmeisterBanner extends HTMLElement {
     // reject button was previously styled as a text link, which gave it less
     // visual weight than accept and conflicted with DSK-OH Rn. 135.
     actions.append(
-      this.createButton(t.save, 'save', 'km-btn--primary'),
-      this.createButton(t.acceptAll, 'accept-all', 'km-btn--secondary'),
-      this.createButton(t.rejectAll, 'reject-all', 'km-btn--secondary'),
+      this.#createButton(t.save, 'save', 'km-btn--primary'),
+      this.#createButton(t.acceptAll, 'accept-all', 'km-btn--secondary'),
+      this.#createButton(t.rejectAll, 'reject-all', 'km-btn--secondary'),
     );
     modal.appendChild(actions);
 
@@ -386,7 +386,7 @@ export class KeksmeisterBanner extends HTMLElement {
     return overlay;
   }
 
-  private createButton(text: string, action: string, className: string): HTMLButtonElement {
+  #createButton(text: string, action: string, className: string): HTMLButtonElement {
     const btn = document.createElement('button');
     btn.className = `km-btn ${className}`;
     btn.dataset.action = action;
@@ -394,8 +394,8 @@ export class KeksmeisterBanner extends HTMLElement {
     return btn;
   }
 
-  private bindBannerEvents(): void {
-    const signal = this._listenerAbort!.signal;
+  #bindBannerEvents(): void {
+    const signal = this.#listenerAbort!.signal;
 
     this.shadowRoot?.addEventListener('click', (e) => {
       const target = (e.target as HTMLElement).closest<HTMLElement>('[data-action]');
@@ -403,30 +403,30 @@ export class KeksmeisterBanner extends HTMLElement {
 
       switch (target.dataset.action) {
         case 'accept-all':
-          this._manager!.acceptAll();
-          this.hide();
+          this.#manager!.acceptAll();
+          this.#hide();
           break;
         case 'reject-all':
         case 'close-reject':
-          this._manager!.rejectAll();
-          this.hide();
+          this.#manager!.rejectAll();
+          this.#hide();
           break;
         case 'settings':
-          this.previouslyFocusedElement = document.activeElement as HTMLElement;
-          this._view = 'modal';
-          this.render();
+          this.#previouslyFocusedElement = document.activeElement as HTMLElement;
+          this.#view = 'modal';
+          this.#render();
           break;
       }
     }, { signal });
 
     this.shadowRoot?.addEventListener('keydown', (e) => {
       if ((e as KeyboardEvent).key !== 'Escape') return;
-      if (this._config?.closeAsReject) {
+      if (this.#config?.closeAsReject) {
         // closeAsReject is on → Escape is the keyboard equivalent of the
         // × button: treat it as a rejection, same as Garante Provv. 231
         // requires from the close affordance.
-        this._manager!.rejectAll();
-        this.hide();
+        this.#manager!.rejectAll();
+        this.#hide();
         return;
       }
       // Default: don't auto-hide on Escape — the user hasn't consented yet.
@@ -436,8 +436,8 @@ export class KeksmeisterBanner extends HTMLElement {
     }, { signal });
   }
 
-  private bindModalEvents(): void {
-    const signal = this._listenerAbort!.signal;
+  #bindModalEvents(): void {
+    const signal = this.#listenerAbort!.signal;
 
     this.shadowRoot?.addEventListener('click', (e) => {
       const target = (e.target as HTMLElement).closest<HTMLElement>('[data-action]');
@@ -445,21 +445,21 @@ export class KeksmeisterBanner extends HTMLElement {
 
       switch (target.dataset.action) {
         case 'save':
-          this._manager!.saveCustom(this.readModalChoices());
-          this.hide();
+          this.#manager!.saveCustom(this.#readModalChoices());
+          this.#hide();
           break;
         case 'accept-all':
-          this._manager!.acceptAll();
-          this.hide();
+          this.#manager!.acceptAll();
+          this.#hide();
           break;
         case 'reject-all':
-          this._manager!.rejectAll();
-          this.hide();
+          this.#manager!.rejectAll();
+          this.#hide();
           break;
         case 'close-modal':
           if (e.target === target) {
-            this._view = 'banner';
-            this.render();
+            this.#view = 'banner';
+            this.#render();
           }
           break;
       }
@@ -471,12 +471,12 @@ export class KeksmeisterBanner extends HTMLElement {
       modal.addEventListener('keydown', (e) => {
         const ke = e as KeyboardEvent;
         if (ke.key === 'Escape') {
-          this._view = 'banner';
-          this.render();
+          this.#view = 'banner';
+          this.#render();
           return;
         }
         if (ke.key === 'Tab') {
-          this.handleTabTrap(ke, modal);
+          this.#handleTabTrap(ke, modal);
         }
       }, { signal });
     }
@@ -486,7 +486,7 @@ export class KeksmeisterBanner extends HTMLElement {
    * Trap Tab focus within the modal.
    * Shift+Tab on the first element wraps to the last; Tab on the last wraps to the first.
    */
-  private handleTabTrap(e: KeyboardEvent, container: HTMLElement): void {
+  #handleTabTrap(e: KeyboardEvent, container: HTMLElement): void {
     const focusable = container.querySelectorAll<HTMLElement>(
       'button, input:not([disabled]), [tabindex]:not([tabindex="-1"]), a[href]'
     );
@@ -504,7 +504,7 @@ export class KeksmeisterBanner extends HTMLElement {
     }
   }
 
-  private readModalChoices(): ConsentChoices {
+  #readModalChoices(): ConsentChoices {
     const choices: ConsentChoices = {};
     const checkboxes = this.shadowRoot?.querySelectorAll<HTMLInputElement>(
       'input[data-category]'
@@ -517,16 +517,16 @@ export class KeksmeisterBanner extends HTMLElement {
     return choices;
   }
 
-  private hide(): void {
-    this._view = 'hidden';
-    this.render();
+  #hide(): void {
+    this.#view = 'hidden';
+    this.#render();
     this.dispatchEvent(new CustomEvent('keksmeister:close'));
     // Restore focus to the element that was focused before the banner/modal opened
-    this.previouslyFocusedElement?.focus();
-    this.previouslyFocusedElement = null;
+    this.#previouslyFocusedElement?.focus();
+    this.#previouslyFocusedElement = null;
   }
 
-  private focusFirst(): void {
+  #focusFirst(): void {
     requestAnimationFrame(() => {
       const firstFocusable = this.shadowRoot?.querySelector<HTMLElement>(
         'button, input:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -535,7 +535,7 @@ export class KeksmeisterBanner extends HTMLElement {
     });
   }
 
-  private buildConfigFromAttributes(): KeksmeisterConfig | null {
+  #buildConfigFromAttributes(): KeksmeisterConfig | null {
     const privacyUrl = this.getAttribute('privacy-url');
     if (!privacyUrl) return null;
 
