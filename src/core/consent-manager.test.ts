@@ -165,6 +165,80 @@ describe('ConsentManager', () => {
     });
   });
 
+  describe('onRevoke callback', () => {
+    it('is not called on first consent grant', () => {
+      const onRevoke = vi.fn();
+      const manager = new ConsentManager(createConfig({ onRevoke }));
+      manager.acceptAll();
+
+      expect(onRevoke).not.toHaveBeenCalled();
+    });
+
+    it('is not called when a category stays accepted across updates', () => {
+      const onRevoke = vi.fn();
+      const manager = new ConsentManager(createConfig({ onRevoke }));
+      manager.acceptAll();
+      manager.saveCustom({ essential: true, analytics: true, marketing: false });
+
+      // analytics stayed accepted; only marketing was revoked.
+      expect(onRevoke).toHaveBeenCalledExactlyOnceWith('marketing');
+    });
+
+    it('fires once per newly declined category via saveCustom', () => {
+      const onRevoke = vi.fn();
+      const manager = new ConsentManager(createConfig({ onRevoke }));
+      manager.acceptAll();
+      manager.saveCustom({ essential: true, analytics: false, marketing: false });
+
+      expect(onRevoke).toHaveBeenCalledTimes(2);
+      expect(onRevoke).toHaveBeenCalledWith('analytics');
+      expect(onRevoke).toHaveBeenCalledWith('marketing');
+    });
+
+    it('fires for every previously accepted category via rejectAll', () => {
+      const onRevoke = vi.fn();
+      const manager = new ConsentManager(createConfig({ onRevoke }));
+      manager.acceptAll();
+      manager.rejectAll();
+
+      expect(onRevoke).toHaveBeenCalledTimes(2);
+      expect(onRevoke).toHaveBeenCalledWith('analytics');
+      expect(onRevoke).toHaveBeenCalledWith('marketing');
+    });
+
+    it('is not called for required categories', () => {
+      const onRevoke = vi.fn();
+      const manager = new ConsentManager(createConfig({ onRevoke }));
+      manager.acceptAll();
+      manager.rejectAll();
+
+      expect(onRevoke).not.toHaveBeenCalledWith('essential');
+    });
+
+    it('fires via revokeAll for every previously accepted, non-required category', () => {
+      const onRevoke = vi.fn();
+      const manager = new ConsentManager(createConfig({ onRevoke }));
+      manager.acceptAll();
+      onRevoke.mockClear();
+
+      manager.revokeAll();
+
+      expect(onRevoke).toHaveBeenCalledTimes(2);
+      expect(onRevoke).toHaveBeenCalledWith('analytics');
+      expect(onRevoke).toHaveBeenCalledWith('marketing');
+      expect(onRevoke).not.toHaveBeenCalledWith('essential');
+    });
+
+    it('does not fire via revokeAll when nothing was accepted yet', () => {
+      const onRevoke = vi.fn();
+      const manager = new ConsentManager(createConfig({ onRevoke }));
+
+      manager.revokeAll();
+
+      expect(onRevoke).not.toHaveBeenCalled();
+    });
+  });
+
   describe('getChoices', () => {
     it('returns a snapshot of current choices', () => {
       const manager = new ConsentManager(createConfig());
@@ -389,6 +463,71 @@ describe('ConsentManager', () => {
       const m2 = new ConsentManager(config);
       expect(m2.isConsentExpired).toBe(true);
       expect(m2.shouldShowBanner).toBe(true);
+    });
+
+    it('treats expired consent as no consent at all (default 180-day window)', () => {
+      const config = createConfig();
+      const manager1 = new ConsentManager(config);
+      manager1.acceptAll();
+      const originalSubjectId = manager1['subjectId'];
+
+      // Push the stored decision past the implicit 180-day window.
+      const store = manager1['store'];
+      const record = store.read()!;
+      record.timestamp = new Date(Date.now() - 181 * 864e5).toISOString();
+      store.write(record);
+
+      const manager2 = new ConsentManager(config);
+      // Expired consent must not silently keep tracking scripts unblocked.
+      expect(manager2.isAccepted('analytics')).toBe(false);
+      expect(manager2.isAccepted('marketing')).toBe(false);
+      expect(manager2.hasConsented).toBe(false);
+      expect(manager2.shouldShowBanner).toBe(true);
+      expect(manager2.getChoices()).toEqual({});
+
+      // The pseudonymous subject id must survive re-consent for audit continuity.
+      const onConsent = vi.fn();
+      manager2.updateConfig({ onConsent });
+      manager2.acceptAll();
+      const newRecord: ConsentRecord = onConsent.mock.calls[0][0];
+      expect(newRecord.subjectId).toBe(originalSubjectId);
+    });
+
+    it('restores consent normally when still within the re-prompt window', () => {
+      const config = createConfig({ consentMaxAgeDays: 180 });
+      const manager1 = new ConsentManager(config);
+      manager1.acceptAll();
+
+      const store = manager1['store'];
+      const record = store.read()!;
+      record.timestamp = new Date(Date.now() - 90 * 864e5).toISOString();
+      store.write(record);
+
+      const manager2 = new ConsentManager(config);
+      expect(manager2.hasConsented).toBe(true);
+      expect(manager2.isAccepted('analytics')).toBe(true);
+      expect(manager2.shouldShowBanner).toBe(false);
+    });
+
+    it('restores old consent unchanged when consentMaxAgeDays is 0 (expiry disabled)', () => {
+      const config = createConfig({ consentMaxAgeDays: 0 });
+      const manager1 = new ConsentManager(config);
+      manager1.acceptAll();
+
+      const store = manager1['store'];
+      const record = store.read()!;
+      record.timestamp = new Date(Date.now() - 5 * 365 * 864e5).toISOString();
+      store.write(record);
+
+      const manager2 = new ConsentManager(config);
+      expect(manager2.hasConsented).toBe(true);
+      expect(manager2.isAccepted('analytics')).toBe(true);
+      expect(manager2.shouldShowBanner).toBe(false);
+      expect(manager2.getChoices()).toEqual({
+        essential: true,
+        analytics: true,
+        marketing: true,
+      });
     });
   });
 
