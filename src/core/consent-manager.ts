@@ -1,5 +1,5 @@
-import { ConsentLogger } from './consent-logger.js';
 import { CookieStore } from './cookie-store.js';
+import { LazyConsentLogger } from './lazy-consent-logger.js';
 import type {
   ConsentCategory,
   ConsentChoices,
@@ -76,7 +76,7 @@ export class ConsentManager extends EventTarget {
   private choices: ConsentChoices = {};
   private _hasConsented = false;
   private subjectId: string | undefined;
-  private logger: ConsentLogger | undefined;
+  private logger: LazyConsentLogger | undefined;
 
   constructor(config: KeksmeisterConfig) {
     super();
@@ -87,7 +87,11 @@ export class ConsentManager extends EventTarget {
       cookieDomain: config.cookieDomain,
     });
     if (config.logging) {
-      this.logger = new ConsentLogger(config.logging);
+      // Dynamically imports the ~2.3 kB gzip logger implementation on first
+      // use, so consumers who never configure `logging` never fetch it. The
+      // facade buffers log()/logSnapshot() calls made before the import
+      // resolves and replays them in order once it does.
+      this.logger = new LazyConsentLogger(config.logging);
     }
     this.restore();
   }

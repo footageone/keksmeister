@@ -500,6 +500,12 @@ describe('ConsentManager', () => {
       manager.acceptAll();
       manager.revokeAll();
 
+      // The logger is loaded lazily (see LazyConsentLogger): both calls above
+      // land before the dynamic import resolves and are queued, then
+      // replayed once it does. Wait for that to settle before asserting, and
+      // before this test ends, so the replay doesn't leak into a later test.
+      await vi.dynamicImportSettled();
+
       expect(beacon).toHaveBeenCalledTimes(2);
 
       const grant = JSON.parse(await (beacon.mock.calls[0][1] as Blob).text());
@@ -511,6 +517,29 @@ describe('ConsentManager', () => {
       expect(revoke.method).toBe('revoke');
       // Same subject across the grant and its revocation.
       expect(revoke.subjectId).toBe(grant.subjectId);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('delivers a consent decision made immediately after construction, before the lazy logger module has resolved', async () => {
+      const beacon = vi.fn(() => true);
+      vi.stubGlobal('navigator', { sendBeacon: beacon, onLine: true });
+
+      const manager = new ConsentManager(
+        createConfig({ logging: { endpoint: '/api/consent' } })
+      );
+      // Fires in the same tick as construction — the dynamic import behind
+      // the logger can't have resolved yet, so this must be buffered rather
+      // than dropped.
+      manager.acceptAll();
+
+      expect(beacon).not.toHaveBeenCalled();
+
+      await vi.dynamicImportSettled();
+
+      expect(beacon).toHaveBeenCalledTimes(1);
+      const grant = JSON.parse(await (beacon.mock.calls[0]![1] as Blob).text());
+      expect(grant.action).toBe('grant');
 
       vi.unstubAllGlobals();
     });
