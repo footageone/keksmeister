@@ -1,6 +1,6 @@
 # Minimal image for the Keksmeister consent log server.
 # The server has no runtime dependencies — just Bun and the source.
-FROM oven/bun:1.4-alpine@sha256:07235578f79ef8c6f97d94aee7938e76f5cdba5f21ae5dbfdd3d3d38058437eb
+FROM oven/bun:1.4-alpine@sha256:629e17411f1f129dbec3af78d5af9c9f2a937435c80349437206c6b0b7422373
 
 WORKDIR /app
 
