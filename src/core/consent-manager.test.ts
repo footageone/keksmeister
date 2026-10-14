@@ -165,6 +165,74 @@ describe('ConsentManager', () => {
     });
   });
 
+  describe('reloadOnRevoke', () => {
+    it('reloads the page on revokeAll when enabled', () => {
+      const reload = vi.spyOn(globalThis.location, 'reload').mockImplementation(() => {});
+      const manager = new ConsentManager(createConfig({ reloadOnRevoke: true }));
+      manager.acceptAll();
+
+      manager.revokeAll();
+
+      expect(reload).toHaveBeenCalledOnce();
+      reload.mockRestore();
+    });
+
+    it('does not reload on revokeAll when the option is unset', () => {
+      const reload = vi.spyOn(globalThis.location, 'reload').mockImplementation(() => {});
+      const manager = new ConsentManager(createConfig());
+      manager.acceptAll();
+
+      manager.revokeAll();
+
+      expect(reload).not.toHaveBeenCalled();
+      reload.mockRestore();
+    });
+
+    it('reloads when a previously accepted category is downgraded to declined', () => {
+      const reload = vi.spyOn(globalThis.location, 'reload').mockImplementation(() => {});
+      const manager = new ConsentManager(createConfig({ reloadOnRevoke: true }));
+      manager.acceptAll();
+      reload.mockClear();
+
+      manager.saveCustom({ analytics: false, marketing: true });
+
+      expect(reload).toHaveBeenCalledOnce();
+      reload.mockRestore();
+    });
+
+    it('does not reload on first consent grant', () => {
+      const reload = vi.spyOn(globalThis.location, 'reload').mockImplementation(() => {});
+      const manager = new ConsentManager(createConfig({ reloadOnRevoke: true }));
+
+      manager.saveCustom({ analytics: false, marketing: false });
+
+      expect(reload).not.toHaveBeenCalled();
+      reload.mockRestore();
+    });
+
+    it('does not reload on accept-all', () => {
+      const reload = vi.spyOn(globalThis.location, 'reload').mockImplementation(() => {});
+      const manager = new ConsentManager(createConfig({ reloadOnRevoke: true }));
+
+      manager.acceptAll();
+
+      expect(reload).not.toHaveBeenCalled();
+      reload.mockRestore();
+    });
+
+    it('does not reload on an update with no downgrade', () => {
+      const reload = vi.spyOn(globalThis.location, 'reload').mockImplementation(() => {});
+      const manager = new ConsentManager(createConfig({ reloadOnRevoke: true }));
+      manager.rejectAll();
+      reload.mockClear();
+
+      manager.saveCustom({ analytics: true, marketing: false });
+
+      expect(reload).not.toHaveBeenCalled();
+      reload.mockRestore();
+    });
+  });
+
   describe('getChoices', () => {
     it('returns a snapshot of current choices', () => {
       const manager = new ConsentManager(createConfig());

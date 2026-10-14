@@ -127,6 +127,29 @@ banner.config = {
 };
 ```
 
+### Consent Mode (`mode`)
+
+```js
+banner.config = {
+  // ...categories, privacyUrl...
+  mode: 'opt-in', // default — no cookies until the visitor consents
+};
+```
+
+- **`opt-in`** (default) — all non-essential categories start **inactive**
+  until the visitor explicitly consents. Required by DSGVO/ePrivacy.
+- **`opt-out`** — all non-essential categories start **active**, and the
+  visitor can opt out afterwards. Matches CCPA/CPRA-style "right to opt
+  out of sale" regimes.
+
+> **⚠️ `mode: 'opt-out'` is for CCPA-style jurisdictions only — it is
+> unlawful for visitors in the EU/EEA.** DSGVO Art. 6(1)(a) + ErwGr 32 and
+> ePrivacy Directive Art. 5(3) require *prior, opt-in* consent before any
+> non-essential cookie is set; the UK's PECR mirrors this. Only use
+> `mode: 'opt-out'` for a US-only deployment, or one gated behind a geo-IP
+> check that keeps EU/EEA (and UK) visitors on the `opt-in` default. See
+> [docs/compliance.md](docs/compliance.md) for the full legal background.
+
 ### Server-side consent logging (proof / Nachweispflicht)
 
 DSGVO / TDDDG require you to **prove** consent. Every `ConsentRecord` carries the
@@ -300,6 +323,14 @@ keksmeister-banner {
   --km-font-family: 'Inter', sans-serif;
 }
 ```
+
+By default, the banner's "Accept all" (`--km-primary`) and "Reject all"
+(`--km-secondary`) buttons use different fill colours. Most DPAs accept
+this, but the strictest CNIL/Garante readings expect identical colour, not
+just identical size — see
+[Layer-1 button parity](docs/compliance.md#layer-1-button-parity--when-accept-and-reject-need-identical-styling)
+in the compliance guide for how to equalize them with `--km-secondary` /
+`--km-secondary-text`.
 
 ### Re-open Settings
 
