@@ -85,8 +85,8 @@
   },
   "devDependencies": {
     "@codecov/vite-plugin": "2.0.1",
-    "@commitlint/cli": "21.2.3",
-    "@commitlint/config-conventional": "21.2.3",
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4",
     "@vitest/browser": "4.1.12",
     "@vitest/coverage-v8": "4.1.12",
     "happy-dom": "20.14.6",
