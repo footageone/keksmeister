@@ -561,6 +561,24 @@ describe('ConsentManager', () => {
       expect(newRecord.subjectId).toBe(originalSubjectId);
     });
 
+    it('keeps explicit declines after expiry in opt-out mode', () => {
+      const config = createConfig({ mode: 'opt-out' });
+      const manager1 = new ConsentManager(config);
+      manager1.saveCustom({ analytics: false, marketing: true });
+
+      const store = manager1['store'];
+      const record = store.read()!;
+      record.timestamp = new Date(Date.now() - 181 * 864e5).toISOString();
+      store.write(record);
+
+      const manager2 = new ConsentManager(config);
+      // The opt-out must not lapse into the opt-out default (accepted).
+      expect(manager2.isAccepted('analytics')).toBe(false);
+      expect(manager2.hasConsented).toBe(false);
+      expect(manager2.shouldShowBanner).toBe(true);
+      expect(manager2.getChoices()).toEqual({ analytics: false });
+    });
+
     it('restores consent normally when still within the re-prompt window', () => {
       const config = createConfig({ consentMaxAgeDays: 180 });
       const manager1 = new ConsentManager(config);
