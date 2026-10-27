@@ -17,6 +17,7 @@ export const nl: KeksmeisterTranslations = {
     acceptAll: 'Alles accepteren',
     rejectAll: 'Alles weigeren',
     alwaysActive: 'Altijd actief',
+    close: 'Sluiten',
   },
   privacyLink: 'Privacybeleid',
   trigger: { label: 'Cookie-instellingen' },

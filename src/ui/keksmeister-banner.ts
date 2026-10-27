@@ -239,6 +239,23 @@ export class KeksmeisterBanner extends HTMLElement {
     return btn;
   }
 
+  /**
+   * Visible close control for the settings modal (accessibility gap fix:
+   * previously the modal could only be left via overlay click or Escape,
+   * with no on-screen affordance). Returns to the banner view, same as
+   * Escape in `bindModalEvents()`.
+   */
+  private buildModalCloseButton(): HTMLButtonElement {
+    const t = this.translations.modal;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'km-modal__close';
+    btn.dataset.action = 'back-to-banner';
+    btn.setAttribute('aria-label', t.close ?? 'Close');
+    btn.textContent = '×'; // ×
+    return btn;
+  }
+
   private buildModalDOM(): HTMLElement {
     const t = this.translations.modal;
     const categories = this._manager!.getCategories();
@@ -253,6 +270,8 @@ export class KeksmeisterBanner extends HTMLElement {
     modal.className = 'km-modal';
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
+
+    modal.appendChild(this.buildModalCloseButton());
 
     const titleId = 'km-modal-title';
     const title = document.createElement('h2');
@@ -461,6 +480,10 @@ export class KeksmeisterBanner extends HTMLElement {
             this._view = 'banner';
             this.render();
           }
+          break;
+        case 'back-to-banner':
+          this._view = 'banner';
+          this.render();
           break;
       }
     }, { signal });
