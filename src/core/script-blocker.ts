@@ -57,73 +57,73 @@ const BLOCKED_SELECTOR = BLOCKED_TAGS.map(
  * dynamically added tags via `MutationObserver`.
  */
 export class ScriptBlocker {
-  private manager: ConsentManager;
-  private observer: MutationObserver | null = null;
-  private activated = new WeakSet<Element>();
-  private consentHandler: (() => void) | null = null;
+  #manager: ConsentManager;
+  #observer: MutationObserver | null = null;
+  #activated = new WeakSet<Element>();
+  #consentHandler: (() => void) | null = null;
 
   constructor(manager: ConsentManager) {
-    this.manager = manager;
+    this.#manager = manager;
   }
 
   /** Start watching the DOM and activate consented resources. */
   start(): void {
-    this.scanAndActivate();
+    this.#scanAndActivate();
 
-    this.observer = new MutationObserver((mutations) => {
+    this.#observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
           if (!(node instanceof HTMLElement)) continue;
-          if (this.isBlockedElement(node) || node.querySelector?.(BLOCKED_SELECTOR)) {
-            this.scanAndActivate();
+          if (this.#isBlockedElement(node) || node.querySelector?.(BLOCKED_SELECTOR)) {
+            this.#scanAndActivate();
             return;
           }
         }
       }
     });
 
-    this.observer.observe(document.documentElement, {
+    this.#observer.observe(document.documentElement, {
       childList: true,
       subtree: true,
     });
 
     // Re-scan when consent changes
-    this.consentHandler = () => this.scanAndActivate();
-    this.manager.addEventListener('keksmeister:consent', this.consentHandler);
+    this.#consentHandler = () => this.#scanAndActivate();
+    this.#manager.addEventListener('keksmeister:consent', this.#consentHandler);
   }
 
   /** Stop watching the DOM and listening for consent changes. */
   stop(): void {
-    this.observer?.disconnect();
-    this.observer = null;
-    if (this.consentHandler) {
-      this.manager.removeEventListener('keksmeister:consent', this.consentHandler);
-      this.consentHandler = null;
+    this.#observer?.disconnect();
+    this.#observer = null;
+    if (this.#consentHandler) {
+      this.#manager.removeEventListener('keksmeister:consent', this.#consentHandler);
+      this.#consentHandler = null;
     }
   }
 
   /** Scan blocked elements and activate those with accepted categories. */
-  private scanAndActivate(): void {
+  #scanAndActivate(): void {
     const elements = document.querySelectorAll<HTMLElement>(BLOCKED_SELECTOR);
     for (const el of elements) {
-      if (this.activated.has(el)) continue;
+      if (this.#activated.has(el)) continue;
 
       const category = el.getAttribute('data-keksmeister');
       if (!category) continue;
 
-      if (this.manager.isAccepted(category)) {
-        this.activateElement(el);
-        this.activated.add(el);
+      if (this.#manager.isAccepted(category)) {
+        this.#activateElement(el);
+        this.#activated.add(el);
       }
     }
   }
 
-  private activateElement(blocked: HTMLElement): void {
+  #activateElement(blocked: HTMLElement): void {
     if (blocked.tagName === 'SCRIPT') {
-      this.activateScript(blocked as HTMLScriptElement);
+      this.#activateScript(blocked as HTMLScriptElement);
       return;
     }
-    this.flipPlaceholders(blocked);
+    this.#flipPlaceholders(blocked);
   }
 
   /**
@@ -131,7 +131,7 @@ export class ScriptBlocker {
    * browsers don't re-evaluate a script element once it has been parsed,
    * regardless of later attribute changes.
    */
-  private activateScript(blocked: HTMLScriptElement): void {
+  #activateScript(blocked: HTMLScriptElement): void {
     const script = document.createElement('script');
 
     for (const attr of blocked.attributes) {
@@ -148,7 +148,7 @@ export class ScriptBlocker {
     }
 
     blocked.parentNode?.replaceChild(script, blocked);
-    this.activated.add(script);
+    this.#activated.add(script);
   }
 
   /**
@@ -157,7 +157,7 @@ export class ScriptBlocker {
    * Setting `src` (or `href`, `srcset`, …) is what triggers the browser
    * to issue the network request, so we never had a request before.
    */
-  private flipPlaceholders(blocked: HTMLElement): void {
+  #flipPlaceholders(blocked: HTMLElement): void {
     const mappings = PLACEHOLDER_MAP[blocked.tagName] ?? [];
     for (const [from, to] of mappings) {
       const value = blocked.getAttribute(from);
@@ -168,7 +168,7 @@ export class ScriptBlocker {
     blocked.removeAttribute('data-keksmeister');
   }
 
-  private isBlockedElement(node: Element): boolean {
+  #isBlockedElement(node: Element): boolean {
     return (
       BLOCKED_TAGS.includes(node.tagName) && node.hasAttribute('data-keksmeister')
     );

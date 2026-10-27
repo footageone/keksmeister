@@ -16,18 +16,18 @@ export interface CookieStoreOptions {
  * the consent choices, revision, and timestamp.
  */
 export class CookieStore {
-  private name: string;
-  private lifetimeDays: number;
-  private domain: string | undefined;
+  #name: string;
+  #lifetimeDays: number;
+  #domain: string | undefined;
 
   constructor(options: CookieStoreOptions = {}) {
-    this.name = options.cookieName ?? DEFAULT_COOKIE_NAME;
-    this.lifetimeDays = options.cookieLifetimeDays ?? DEFAULT_LIFETIME_DAYS;
+    this.#name = options.cookieName ?? DEFAULT_COOKIE_NAME;
+    this.#lifetimeDays = options.cookieLifetimeDays ?? DEFAULT_LIFETIME_DAYS;
 
     if (options.cookieDomain && /[;\s=]/.test(options.cookieDomain)) {
       throw new Error(`[keksmeister] Invalid cookieDomain: "${options.cookieDomain}"`);
     }
-    this.domain = options.cookieDomain;
+    this.#domain = options.cookieDomain;
   }
 
   /**
@@ -41,28 +41,28 @@ export class CookieStore {
    * the answer the visitor just gave.
    */
   read(): ConsentRecord | null {
-    const records = this.getCookies(this.name)
-      .map((raw) => this.decode(raw))
+    const records = this.#getCookies(this.#name)
+      .map((raw) => this.#decode(raw))
       .filter((record): record is ConsentRecord => record !== null);
 
     if (records.length === 0) return null;
 
     return records.reduce((newest, record) =>
-      this.decidedAt(record) > this.decidedAt(newest) ? record : newest
+      this.#decidedAt(record) > this.#decidedAt(newest) ? record : newest
     );
   }
 
   /** Write a consent record to the cookie. */
   write(record: ConsentRecord): void {
     const encoded = btoa(JSON.stringify(record));
-    this.expireHostOnlyCopy();
-    this.setCookie(this.name, encoded, this.lifetimeDays);
+    this.#expireHostOnlyCopy();
+    this.#setCookie(this.#name, encoded, this.#lifetimeDays);
   }
 
   /** Remove the consent cookie. */
   clear(): void {
-    this.setCookie(this.name, '', -1);
-    this.expireHostOnlyCopy();
+    this.#setCookie(this.#name, '', -1);
+    this.#expireHostOnlyCopy();
   }
 
   /** Delete specific cookies by name (used for auto-clear on revocation). */
@@ -71,14 +71,14 @@ export class CookieStore {
     // a `domain=` attribute (`.example.com`). Deleting without a matching
     // domain silently no-ops, so retry across the current hostname and its
     // parent domains in addition to the plain, path-only attempt.
-    const domainVariants = this.hostnameDomainVariants();
+    const domainVariants = this.#hostnameDomainVariants();
 
     for (const name of names) {
-      this.setCookie(name, '', -1);
+      this.#setCookie(name, '', -1);
       // Also try clearing with common path variations
-      this.setCookie(name, '', -1, '/');
+      this.#setCookie(name, '', -1, '/');
       for (const domain of domainVariants) {
-        this.setCookie(name, '', -1, '/', domain);
+        this.#setCookie(name, '', -1, '/', domain);
       }
     }
   }
@@ -94,13 +94,13 @@ export class CookieStore {
    * neither writing nor clearing the domain cookie touches it. Expire it
    * explicitly, otherwise it outlives a revocation and keeps being sent.
    */
-  private expireHostOnlyCopy(): void {
-    if (this.domain) {
-      this.setCookie(this.name, '', -1, '/', null);
+  #expireHostOnlyCopy(): void {
+    if (this.#domain) {
+      this.#setCookie(this.#name, '', -1, '/', null);
     }
   }
 
-  private decode(raw: string): ConsentRecord | null {
+  #decode(raw: string): ConsentRecord | null {
     try {
       return JSON.parse(atob(raw)) as ConsentRecord;
     } catch {
@@ -109,14 +109,14 @@ export class CookieStore {
   }
 
   /** Sort key for duplicate records; an unparseable timestamp ranks oldest. */
-  private decidedAt(record: ConsentRecord): number {
+  #decidedAt(record: ConsentRecord): number {
     const time = new Date(record.timestamp).getTime();
     return Number.isFinite(time) ? time : -Infinity;
   }
 
   /** Every value stored under `name`, in `document.cookie` order. */
-  private getCookies(name: string): string[] {
-    const pattern = new RegExp(`(?:^|;\\s*)${this.escapeRegex(name)}=([^;]*)`, 'g');
+  #getCookies(name: string): string[] {
+    const pattern = new RegExp(`(?:^|;\\s*)${this.#escapeRegex(name)}=([^;]*)`, 'g');
     return Array.from(document.cookie.matchAll(pattern), (match) => {
       try {
         return decodeURIComponent(match[1]);
@@ -127,12 +127,12 @@ export class CookieStore {
   }
 
   /** `domain: null` writes a host-only cookie regardless of the configured domain. */
-  private setCookie(
+  #setCookie(
     name: string,
     value: string,
     days: number,
     path = '/',
-    domain: string | null = this.domain ?? null
+    domain: string | null = this.#domain ?? null
   ): void {
     const parts = [
       `${name}=${encodeURIComponent(value)}`,
@@ -166,7 +166,7 @@ export class CookieStore {
    * `.example.com`. Returns an empty list outside a browser (no
    * `location`).
    */
-  private hostnameDomainVariants(): string[] {
+  #hostnameDomainVariants(): string[] {
     const hostname = globalThis.location?.hostname;
     if (!hostname) return [];
 
@@ -178,7 +178,7 @@ export class CookieStore {
     return variants;
   }
 
-  private escapeRegex(str: string): string {
+  #escapeRegex(str: string): string {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 }
