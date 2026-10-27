@@ -1,12 +1,27 @@
 // Core (headless, no UI)
+//
+// Imported directly from their own modules rather than through
+// `./core/index.js`: that barrel also statically re-exports the real
+// `ConsentLogger` (for the `keksmeister/core` subpath, built separately via
+// `tsc`). Routing through it here would pull the real, eager logger
+// implementation into this bundled entry's static import graph and defeat
+// the dynamic import in `lazy-consent-logger.ts` (Rollup cannot chunk-split
+// a module that's also statically reachable — see `INEFFECTIVE_DYNAMIC_IMPORT`).
+export { ConsentManager } from './core/consent-manager.js';
+export { CookieStore } from './core/cookie-store.js';
+export { ScriptBlocker } from './core/script-blocker.js';
+export { ServiceRegistry } from './core/service-adapter.js';
+
+// ConsentLogger is re-exported as the lazy-loading facade so the ~2.3 kB
+// gzip implementation is only fetched when server-side logging is actually
+// used, rather than being bundled into the main chunk unconditionally. It
+// implements the same public API (`log`, `logSnapshot`, `flush`), buffering
+// calls until the real logger has loaded. Import from `keksmeister/core` for
+// the real, eagerly-loaded class instead.
 export {
-  ConsentManager,
-  ConsentLogger,
+  LazyConsentLogger as ConsentLogger,
   createConsentLogger,
-  CookieStore,
-  ScriptBlocker,
-  ServiceRegistry,
-} from './core/index.js';
+} from './core/lazy-consent-logger.js';
 
 // UI (Web Components)
 export { KeksmeisterBanner } from './ui/index.js';
