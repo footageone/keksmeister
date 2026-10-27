@@ -198,6 +198,7 @@ export class ConsentManager extends EventTarget {
 
   /** Programmatically revoke consent and clear the cookie. */
   revokeAll(): void {
+    const previousChoices = { ...this.#choices };
     const choices: ConsentChoices = {};
     for (const cat of this.#config.categories) {
       choices[cat.id] = cat.required === true;
@@ -220,7 +221,20 @@ export class ConsentManager extends EventTarget {
     this.subjectId = undefined;
     this.store.clear();
 
+    // Notify per-category revocations for everything that was previously
+    // accepted. Required categories can't be revoked, so they're excluded.
+    for (const cat of this.#config.categories) {
+      if (previousChoices[cat.id] === true && !cat.required) {
+        this.#config.onRevoke?.(cat.id);
+      }
+    }
+
     this.#dispatch('keksmeister:revoke', { categoryId: '*' });
+
+    // Already-loaded third-party scripts can't be unloaded — reload to
+    // actually stop them. Runs last: the logger above uses sendBeacon /
+    // keepalive fetch, both designed to survive the navigation.
+    this.#reloadPage();
   }
 
   /** Get all configured categories. */
@@ -240,7 +254,7 @@ export class ConsentManager extends EventTarget {
    * code, so the snapshot captures the actual on-screen texts.
    *
    * The returned object is decoupled from the live config: callers that
-   * mutate `this.config.categories` or the resolved translations after the
+   * mutate `this.#config.categories` or the resolved translations after the
    * fact cannot retroactively change a snapshot that was already taken.
    */
   getConfigSnapshot(opts?: {
@@ -281,7 +295,11 @@ export class ConsentManager extends EventTarget {
     // Recover the pseudonymous id even across a revision bump, so re-consent on
     // the same browser stays tied to the same subject in the audit trail.
     this.subjectId = record.subjectId;
-    if (record.revision === this.#getRevision()) {
+    // An expired consent decision must behave like no consent at all: leave
+    // choices empty and _hasConsented false so isAccepted() stays negative
+    // and shouldShowBanner re-prompts, rather than letting stale approval
+    // keep scripts unblocked past the re-prompt window.
+    if (record.revision === this.#getRevision() && !this.isConsentExpired) {
       this.#choices = record.choices;
       this.#hasConsented = true;
     }
@@ -316,6 +334,13 @@ export class ConsentManager extends EventTarget {
     // Fire callback
     this.#config.onConsent?.(record);
 
+    // Notify per-category revocations (previously accepted, now declined)
+    for (const cat of this.#config.categories) {
+      if (previousChoices[cat.id] === true && !choices[cat.id]) {
+        this.#config.onRevoke?.(cat.id);
+      }
+    }
+
     // Server-side logging (grant/update)
     this.#logger?.log(record);
 
@@ -329,6 +354,16 @@ export class ConsentManager extends EventTarget {
 
     // Push to GTM dataLayer if available
     this.#pushToDataLayer(record);
+
+    // If a previously accepted category was just declined, already-loaded
+    // scripts for it may still be running. Reload to stop them — but never
+    // on first consent or "accept all", where no category can be downgraded.
+    const downgraded = Object.keys(previousChoices).some(
+      (categoryId) => previousChoices[categoryId] === true && choices[categoryId] === false
+    );
+    if (downgraded) {
+      this.#reloadPage();
+    }
   }
 
   #autoClear(
@@ -388,5 +423,11 @@ export class ConsentManager extends EventTarget {
 
   #dispatch(name: string, detail: unknown): void {
     this.dispatchEvent(new CustomEvent(name, { detail }));
+  }
+
+  /** Reload the page when `reloadOnRevoke` is enabled. No-op outside a browser. */
+  #reloadPage(): void {
+    if (!this.#config.reloadOnRevoke) return;
+    globalThis.location?.reload();
   }
 }

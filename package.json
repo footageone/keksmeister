@@ -1,6 +1,6 @@
 {
   "name": "keksmeister",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "A modern, framework-agnostic cookie consent Web Component with Shadow DOM encapsulation. Built for GDPR/DSGVO compliance.",
   "type": "module",
   "sideEffects": [
@@ -91,16 +91,16 @@
   },
   "devDependencies": {
     "@codecov/vite-plugin": "2.0.1",
-    "@commitlint/cli": "21.2.1",
-    "@commitlint/config-conventional": "21.2.0",
-    "@vitest/browser": "4.1.10",
-    "@vitest/coverage-v8": "4.1.10",
-    "happy-dom": "20.10.6",
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4",
+    "@vitest/browser": "4.1.12",
+    "@vitest/coverage-v8": "4.1.12",
+    "happy-dom": "21.0.4",
     "husky": "9.1.7",
-    "marked": "18.0.6",
-    "terser": "5.49.0",
+    "marked": "18.1.1",
+    "terser": "5.51.2",
     "typescript": "7.0.2",
-    "vite": "8.1.4",
-    "vitest": "4.1.10"
+    "vite": "8.3.5",
+    "vitest": "4.1.12"
   }
 }
