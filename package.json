@@ -93,14 +93,14 @@
     "@codecov/vite-plugin": "2.0.1",
     "@commitlint/cli": "21.2.4",
     "@commitlint/config-conventional": "21.2.4",
-    "@vitest/browser": "5.0.5",
-    "@vitest/coverage-v8": "5.0.5",
+    "@vitest/browser": "5.1.0",
+    "@vitest/coverage-v8": "5.1.0",
     "happy-dom": "21.0.4",
     "husky": "9.1.7",
     "marked": "18.1.3",
     "terser": "5.51.2",
     "typescript": "7.0.2",
     "vite": "8.3.5",
-    "vitest": "5.0.5"
+    "vitest": "5.1.0"
   }
 }
